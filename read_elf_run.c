@@ -13,7 +13,7 @@ Elf32_Ehdr header;
 		printf("erreur.\n");
 	}
 	else{
-		fread(&header,1,sizeof(header),file);
+		fread(&header,1,sizeof(header),f);
 /*e_ident[]*/
 		printf("Magic number\t");
 		for(i=0;i<16;i++){
@@ -86,11 +86,8 @@ Elf32_Ehdr header;
 	Elf32_Shdr *elf_sec_table = (Elf32_Shdr*) malloc(sizeof(Elf32_Shdr)*11)/* elfheader.e_shnum*/;
 	int num=0;
 
-	Elf32_Ehdr elf_head;
-	fread(&elf_head, sizeof(Elf64_Ehdr), 1, f);
-/* elfheader  elfheader.e_shnum  */
 	if(f){
-		int err_fseek = fseek(f, elfheader.e_shoff, SEEK_SET);
+		int err_fseek = fseek(f, header.e_shoff, SEEK_SET);
 		if(err_fseek==0){
 			printf("Erreur recherche table des sections\n");
 		}
