@@ -1,6 +1,7 @@
 #include "myelf.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h> 
 #include "conversion.h"
 
 
@@ -13,7 +14,8 @@ int main(int argc,char* argv[]){
 		printf("erreur.\n");
 		exit(1);
 	}
-	else{
+//header
+	else if(strcmp(argv[2],"-h")==0){
 		fread(&header,1,sizeof(header),file);
 /*e_ident[]*/
 		printf("Magic number\t");
@@ -108,10 +110,11 @@ int main(int argc,char* argv[]){
 	//table de sections
 	else if(strcmp(argv[2],"-S")==0){
 		fread(&header,1,sizeof(header),file);
-		printf("Il y a %d en-tetes de sections, debutant a l'adresse de decalage %x\n",BigtoLittle16(header.e_shnum),BigtoLittle32(header.e_shoff));
+		printf("Il y a %d en-tetes de sections, debutant a l'adresse de decalage %#x\n\n",swap_uint16(header.e_shnum),swap_uint32(header.e_shoff));
+		printf("En-tetes de section:\n");
 		
 	}
-}
+
 
 
 
