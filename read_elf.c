@@ -111,7 +111,6 @@ int main(int argc,char* argv[]){
 		printf("Il y a %d en-tetes de sections, debutant a l'adresse de decalage %x\n",BigtoLittle16(header.e_shnum),BigtoLittle32(header.e_shoff));
 		
 	}
-	return 0;
 }
 
 
