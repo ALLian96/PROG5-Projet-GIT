@@ -1,10 +1,8 @@
 #include "myelf.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "conversion.h"
 
-#define BigtoLittle16(A) ((((__u16)(A) & 0xff00) >> 8) | (((__u16)(A) & 0x00ff) << 8))
-#define BigtoLittle32(A) ((((__u32)(A) & 0xff000000) >> 24) | (((__u32)(A) & 0x00ff0000) >> 8) | \
-             (((__u32)(A) & 0x0000ff00) << 8) | (((__u32)(A) & 0x000000ff) << 24))
 
 int main(int argc,char* argv[]){
 	Elf32_Ehdr header;
@@ -56,7 +54,7 @@ int main(int argc,char* argv[]){
 		}
 /*e_type*/
 		printf("\nType             \t\t");
-		switch(BigtoLittle16(header.e_type)){
+		switch(swap_uint16(header.e_type)){
 			case ET_NONE: printf("No file");
 					break;
 			case ET_REL: printf("REL");
@@ -73,7 +71,7 @@ int main(int argc,char* argv[]){
 					break;
 		}
 		printf("\nmachine          \t\t");
-		switch(BigtoLittle16(header.e_machine)){
+		switch(swap_uint16(header.e_machine)){
 			case EM_NONE: printf("No machine");
 					break;
 			case EM_M32: printf("AT&T WE 32100");
@@ -93,17 +91,17 @@ int main(int argc,char* argv[]){
 			default:printf("unknown");
 					break;
 		}
-		printf("\nObjet file version            \t%#02x",BigtoLittle32(header.e_version));
-		printf("\nAdresse du point d'entree     \t%#02x",BigtoLittle32(header.e_entry));
-		printf("\nDebut des en-tetes de programme\t%d(octets)",BigtoLittle32(header.e_phoff));
-		printf("\nDebut des en-tetes de section \t%d(octets)",BigtoLittle32(header.e_shoff));
-		printf("\nFanions                       \t%#02x",BigtoLittle32(header.e_flags));
-		printf("\nTaille de cet en-tete         \t%d(bytes)",BigtoLittle16(header.e_ehsize));
-		printf("\nTaille de l'en-tete du programme\t%d(bytes)",BigtoLittle16(header.e_phentsize));
-		printf("\nNombre d'en-tete du programme  \t%d",BigtoLittle16(header.e_phnum));
-		printf("\nTaille des en-tetes de section\t%d(bytes)",BigtoLittle16(header.e_shentsize));
-		printf("\nNombre d'en-tetes de section  \t%d",BigtoLittle16(header.e_shnum));
-		printf("\nTable d'indexes des chaines d'en-tete de section\t%d\n",BigtoLittle16(header.e_shstrndx));
+		printf("\nObjet file version            \t%#02x",swap_uint32(header.e_version));
+		printf("\nAdresse du point d'entree     \t%#02x",swap_uint32(header.e_entry));
+		printf("\nDebut des en-tetes de programme\t%d(octets)",swap_uint32(header.e_phoff));
+		printf("\nDebut des en-tetes de section \t%d(octets)",swap_uint32(header.e_shoff));
+		printf("\nFanions                       \t%#02x",swap_int32(header.e_flags));
+		printf("\nTaille de cet en-tete         \t%d(bytes)",swap_uint16(header.e_ehsize));
+		printf("\nTaille de l'en-tete du programme\t%d(bytes)",swap_uint16(header.e_phentsize));
+		printf("\nNombre d'en-tete du programme  \t%d",swap_uint16(header.e_phnum));
+		printf("\nTaille des en-tetes de section\t%d(bytes)",swap_uint16(header.e_shentsize));
+		printf("\nNombre d'en-tetes de section  \t%d",swap_uint16(header.e_shnum));
+		printf("\nTable d'indexes des chaines d'en-tete de section\t%d\n",swap_uint16(header.e_shstrndx));
 		
 	}
 	return 0;
