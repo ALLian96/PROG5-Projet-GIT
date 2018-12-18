@@ -69,11 +69,10 @@ int main(int argc,char* argv[]){
 					break;
 		}
 
-		printf("\n");
 		n=(header.e_type>>8)|(header.e_type<<8);
-		printf("Type\t\t%hx\n",n);
+		printf("\nType\t\t%hx",n);
 		n=(header.e_machine>>8)|(header.e_machine<<8);
-		printf("\nmachine\t\t");
+		printf("\nmachine\t\t %x",n);
 		switch(n){
 			case EM_NONE: printf("No machine");
 					break;
@@ -94,17 +93,17 @@ int main(int argc,char* argv[]){
 			default:printf("unknown");
 					break;
 		}
-		printf("\nobjet file version\t%2x\n",header.e_version);
-		printf("entry point virtual address\t %2x\n",header.e_entry);
-		printf("program header table file offset\t %2x\n",header.e_phoff);
-		printf("section header table file offset\t %x\n",header.e_shoff);
-		printf("processor_specific flags\t %x\n",header.e_flags);
-		printf("elf header size in bytes\t %x\n",header.e_ehsize);
-		printf("program header table entry size\t %x\n",header.e_phentsize);
-		printf("progral header table entry count\t%x\n",header.e_phnum);
-		printf("section header table entry size\t%x\n",header.e_shentsize);
-		printf("section header table entry count\t%2x\n",header.e_shnum);
-		printf("section header string table index\t%2x\n",header.e_shstrndx);
+		printf("\nobjet file version\t%#02x",header.e_version);
+		printf("\nadresse du point d'entree\t%#02x",header.e_entry);
+		printf("\ndebut des en-tetes de programme\t %2x",header.e_phoff);
+		printf("\ndebut des en-tetes de section\t %d(bytes)",header.e_shoff);
+		printf("\nfanions\t %#02x\n",header.e_flags);
+		printf("\ntaille de cet en-tete\t %d(bytes)",header.e_ehsize);
+		printf("\nprogram header table entry size\t %d(bytes)",header.e_phentsize);
+		printf("\nprogral header table entry count\t%d",header.e_phnum);
+		printf("\nsection header table entry size\t%d(bytes)",header.e_shentsize);
+		printf("\nsection header table entry count\t%d",header.e_shnum);
+		printf("\nsection header string table index\t%d\n",header.e_shstrndx);
 		
 	}
 	return 0;
