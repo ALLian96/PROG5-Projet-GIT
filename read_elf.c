@@ -95,7 +95,7 @@ int main(int argc,char* argv[]){
 		printf("\nAdresse du point d'entree     \t%#02x",swap_uint32(header.e_entry));
 		printf("\nDebut des en-tetes de programme\t%d(octets)",swap_uint32(header.e_phoff));
 		printf("\nDebut des en-tetes de section \t%d(octets)",swap_uint32(header.e_shoff));
-		printf("\nFanions                       \t%#02x",swap_int32(header.e_flags));
+		printf("\nFanions                       \t%#02x",swap_uint32(header.e_flags));
 		printf("\nTaille de cet en-tete         \t%d(bytes)",swap_uint16(header.e_ehsize));
 		printf("\nTaille de l'en-tete du programme\t%d(bytes)",swap_uint16(header.e_phentsize));
 		printf("\nNombre d'en-tete du programme  \t%d",swap_uint16(header.e_phnum));
