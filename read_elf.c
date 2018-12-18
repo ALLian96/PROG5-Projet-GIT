@@ -2,6 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define BigtoLittle16(A) ((((__u16)(A) & 0xff00) >> 8) | (((__u16)(A) & 0x00ff) << 8))
+#define BigtoLittle32(A) ((((__u32)(A) & 0xff000000) >> 24) | (((__u32)(A) & 0x00ff0000) >> 8) | \
+             (((__u32)(A) & 0x0000ff00) << 8) | (((__u32)(A) & 0x000000ff) << 24))
+
 int main(int argc,char* argv[]){
 	Elf32_Ehdr header;
 	int i,n;
@@ -18,7 +22,7 @@ int main(int argc,char* argv[]){
 		for(i=0;i<16;i++){
 			printf("%02x ",header.e_ident[i]);
 		}
-		printf("\nClasse\t\t");
+		printf("\nClasse            \t\t");
 		for(i=EI_MAG1;i<=EI_MAG3;i++){
 			printf("%c",header.e_ident[i]);
 		}
@@ -30,7 +34,7 @@ int main(int argc,char* argv[]){
 			case 2: printf("64");
 					break;
 		}
-		printf("\nDonnee\t\t");
+		printf("\nDonnee            \t\t");
 		switch(header.e_ident[EI_DATA]){
 			case 0: printf("Invalid");
 					break;
@@ -39,10 +43,10 @@ int main(int argc,char* argv[]){
 			case 2: printf("2's complement values ,big endian");
 					break;
 		}
-		printf("\nVersion\t\t");
+		printf("\nVersion          \t\t");
 		if(header.e_ident[EI_VERSION]==EV_CURRENT)
 			printf("%d(current)",header.e_ident[EI_VERSION]);
-		printf("\nOS/ABI\t\t");
+		printf("\nOS/ABI           \t\t");
 		switch(header.e_ident[EI_OSABI]){
 			case 0:printf("UNIX System V ABI");
 				break;
@@ -51,8 +55,8 @@ int main(int argc,char* argv[]){
 
 		}
 /*e_type*/
-		printf("\nType\t\t");
-		switch(header.e_type>>8){
+		printf("\nType             \t\t");
+		switch(BigtoLittle16(header.e_type)){
 			case ET_NONE: printf("No file");
 					break;
 			case ET_REL: printf("REL");
@@ -68,12 +72,8 @@ int main(int argc,char* argv[]){
 			case ET_HIPROC: printf("HIPROC");
 					break;
 		}
-
-		n=(header.e_type>>8)|(header.e_type<<8);
-		printf("\nType\t\t%hx",n);
-		n=(header.e_machine>>8)|(header.e_machine<<8);
-		printf("\nmachine\t\t %x",n);
-		switch(n){
+		printf("\nmachine          \t\t");
+		switch(BigtoLittle16(header.e_machine)){
 			case EM_NONE: printf("No machine");
 					break;
 			case EM_M32: printf("AT&T WE 32100");
@@ -88,22 +88,22 @@ int main(int argc,char* argv[]){
 					break;
 			case EM_860: printf("Intel 80860");
 					break;
-			case 28:printf("ARM");
+			case EM_ARM:printf("ARM");
 					break;
 			default:printf("unknown");
 					break;
 		}
-		printf("\nobjet file version\t%#02x",header.e_version);
-		printf("\nadresse du point d'entree\t%#02x",header.e_entry);
-		printf("\ndebut des en-tetes de programme\t %2x",header.e_phoff);
-		printf("\ndebut des en-tetes de section\t %d(bytes)",header.e_shoff);
-		printf("\nfanions\t %#02x\n",header.e_flags);
-		printf("\ntaille de cet en-tete\t %d(bytes)",header.e_ehsize);
-		printf("\nprogram header table entry size\t %d(bytes)",header.e_phentsize);
-		printf("\nprogral header table entry count\t%d",header.e_phnum);
-		printf("\nsection header table entry size\t%d(bytes)",header.e_shentsize);
-		printf("\nsection header table entry count\t%d",header.e_shnum);
-		printf("\nsection header string table index\t%d\n",header.e_shstrndx);
+		printf("\nObjet file version            \t%#02x",BigtoLittle32(header.e_version));
+		printf("\nAdresse du point d'entree     \t%#02x",BigtoLittle32(header.e_entry));
+		printf("\nDebut des en-tetes de programme\t%d(octets)",BigtoLittle32(header.e_phoff));
+		printf("\nDebut des en-tetes de section \t%d(octets)",BigtoLittle32(header.e_shoff));
+		printf("\nFanions                       \t%#02x",BigtoLittle32(header.e_flags));
+		printf("\nTaille de cet en-tete         \t%d(bytes)",BigtoLittle16(header.e_ehsize));
+		printf("\nTaille de l'en-tete du programme\t%d(bytes)",BigtoLittle16(header.e_phentsize));
+		printf("\nNombre d'en-tete du programme  \t%d",BigtoLittle16(header.e_phnum));
+		printf("\nTaille des en-tetes de section\t%d(bytes)",BigtoLittle16(header.e_shentsize));
+		printf("\nNombre d'en-tetes de section  \t%d",BigtoLittle16(header.e_shnum));
+		printf("\nTable d'indexes des chaines d'en-tete de section\t%d\n",BigtoLittle16(header.e_shstrndx));
 		
 	}
 	return 0;
