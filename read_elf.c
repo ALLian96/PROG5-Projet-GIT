@@ -104,5 +104,18 @@ int main(int argc,char* argv[]){
 		printf("\nTable d'indexes des chaines d'en-tete de section\t%d\n",swap_uint16(header.e_shstrndx));
 		
 	}
+
+	//table de sections
+	else if(strcmp(argv[2],"-S")==0){
+		fread(&header,1,sizeof(header),file);
+		printf("Il y a %d en-tetes de sections, debutant a l'adresse de decalage %x\n",BigtoLittle16(header.e_shnum),BigtoLittle32(header.e_shoff));
+		
+	}
+	return 0;
+}
+
+
+
+
 	return 0;
 }
