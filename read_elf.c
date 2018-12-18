@@ -39,7 +39,16 @@ int main(int argc,char* argv[]){
 					break;
 		}
 		printf("\nVersion\t\t");
-		printf("%d",header.e_ident[EI_VERSION]);
+		if(header.e_ident[EI_VERSION]==EV_CURRENT)
+			printf("%d(current)",header.e_ident[EI_VERSION]);
+		printf("\nOS/ABI\t\t");
+		switch(header.e_ident[EI_OSABI]){
+			case 0:printf("UNIX System V ABI");
+				break;
+			case 3:printf("linux");
+				break;
+
+		}
 /*e_type*/
 		printf("\nType\t\t");
 		switch(header.e_type){
@@ -60,7 +69,7 @@ int main(int argc,char* argv[]){
 		}
 
 		printf("\n");
-		printf("Type\t\t%x\n",header.e_type);
+		printf("Type\t\t%0x\n",header.e_type);
 		printf("architecture\t %2x\n",header.e_machine);
 		printf("objet file version\t%2x\n",header.e_version);
 		printf("entry point virtual address\t %2x\n",header.e_entry);
