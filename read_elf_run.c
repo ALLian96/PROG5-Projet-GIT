@@ -1,26 +1,27 @@
+#include "myelf.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "elf_structs.h"
-void main(int argc, char** argv){
+#define BigtoLittle16(A) ((((__u16)(A) & 0xff00) >> 8) | (((__u16)(A) & 0x00ff) << 8))
+#define BigtoLittle32(A) ((((__u32)(A) & 0xff000000) >> 24) | (((__u32)(A) & 0x00ff0000) >> 8) | \
+             (((__u32)(A) & 0x0000ff00) << 8) | (((__u32)(A) & 0x000000ff) << 24))
 
-Elf32_Ehdr header;
-	int i;
-	FILE* f=fopen(argv[1],"rb");
-
-// PARTIE 1 ----------------------------------
-	if(f==NULL){
+int main(int argc,char* argv[]){
+	Elf32_Ehdr header;
+	int i,n;
+	FILE *file;
+	file=fopen(argv[1],"r");
+	if(file==NULL){
 		printf("erreur.\n");
-	}
-	else{
-		fread(&header,1,sizeof(header),f);
+		exit(1);
+	}	else{
+		fread(&header,1,sizeof(header),file);
 /*e_ident[]*/
 		printf("Magic number\t");
 		for(i=0;i<16;i++){
 			printf("%02x ",header.e_ident[i]);
 		}
-		printf("\n");
-		printf("Classe\t\t");
+		printf("\nClasse            \t\t");
 		for(i=EI_MAG1;i<=EI_MAG3;i++){
 			printf("%c",header.e_ident[i]);
 		}
@@ -32,23 +33,29 @@ Elf32_Ehdr header;
 			case 2: printf("64");
 					break;
 		}
-		printf("\n");
-		printf("Donnee\t\t");
+		printf("\nDonnee            \t\t");
 		switch(header.e_ident[EI_DATA]){
 			case 0: printf("Invalid");
 					break;
-			case 1: printf("2's complement values ,little endian");
+			case 1: printf("2's complement values, little endian");
 					break;
-			case 2: printf("2's complement values ,big endian");
+			case 2: printf("2's complement values, big endian");
 					break;
 		}
-		printf("\n");
+		printf("\nVersion          \t\t");
+		if(header.e_ident[EI_VERSION]==EV_CURRENT)
+			printf("%d(current)",header.e_ident[EI_VERSION]);
+		printf("\nOS/ABI           \t\t");
+		switch(header.e_ident[EI_OSABI]){
+			case 0:printf("UNIX System V ABI");
+				break;
+			case 3:printf("linux");
+				break;
 
-		printf("Version\t\t");
-		printf("%d\n",header.e_ident[EI_VERSION]);
+		}
 /*e_type*/
-		printf("Type\t\t");
-		switch(header.e_type){
+		printf("\nType             \t\t");
+		switch(BigtoLittle16(header.e_type)){
 			case ET_NONE: printf("No file");
 					break;
 			case ET_REL: printf("REL");
@@ -64,54 +71,79 @@ Elf32_Ehdr header;
 			case ET_HIPROC: printf("HIPROC");
 					break;
 		}
-		printf("\n");
-		printf("Type\t\t%x\n",header.e_type);
-		printf("architecture\t %2x\n",header.e_machine);
-		printf("objet file version\t%2x\n",header.e_version);
-		printf("entry point virtual address\t %2x\n",header.e_entry);
-		printf("program header table file offset\t %2x\n",header.e_phoff);
-		printf("section header table file offset\t %x\n",header.e_shoff);
-		printf("processor_specific flags\t %x\n",header.e_flags);
-		printf("elf header size in bytes\t %x\n",header.e_ehsize);
-		printf("program header table entry size\t %x\n",header.e_phentsize);
-		printf("progral header table entry count\t%x\n",header.e_phnum);
-		printf("section header table entry size\t%x\n",header.e_shentsize);
-		printf("section header table entry count\t%2x\n",header.e_shnum);
-		printf("section header string table index\t%2x\n",header.e_shstrndx);
+		printf("\nmachine          \t\t");
+		switch(BigtoLittle16(header.e_machine)){
+			case EM_NONE: printf("No machine");
+					break;
+			case EM_M32: printf("AT&T WE 32100");
+					break;
+			case EM_SPARC: printf("SUN SPARC");
+					break;
+			case EM_386: printf("Intel 80386");
+					break;
+			case EM_68K: printf("Motorola m68k family ");
+					break;
+			case EM_88K: printf("Motorola m88k family");
+					break;
+			case EM_860: printf("Intel 80860");
+					break;
+			case EM_ARM:printf("ARM");
+					break;
+			default:printf("unknown");
+					break;
+		}
+		printf("\nObjet file version            \t%#02x",BigtoLittle32(header.e_version));
+		printf("\nAdresse du point d'entree     \t%#02x",BigtoLittle32(header.e_entry));
+		printf("\nDebut des en-tetes de programme\t%d(octets)",BigtoLittle32(header.e_phoff));
+		printf("\nDebut des en-tetes de section \t%d(octets)",BigtoLittle32(header.e_shoff));
+		printf("\nFanions                       \t%#02x",BigtoLittle32(header.e_flags));
+		printf("\nTaille de cet en-tete         \t%d(bytes)",BigtoLittle16(header.e_ehsize));
+		printf("\nTaille de l'en-tete du programme\t%d(bytes)",BigtoLittle16(header.e_phentsize));
+		printf("\nNombre d'en-tete du programme  \t%d",BigtoLittle16(header.e_phnum));
+		printf("\nTaille des en-tetes de section\t%d(bytes)",BigtoLittle16(header.e_shentsize));
+		printf("\nNombre d'en-tetes de section  \t%d",BigtoLittle16(header.e_shnum));
+		printf("\nTable d'indexes des chaines d'en-tete de section\t%d\n",BigtoLittle16(header.e_shstrndx));
 		
-}
+	}
+
 
 // PARTIE 2 ----------------------------------
 
-	Elf32_Shdr *elf_sec_table = (Elf32_Shdr*) malloc(sizeof(Elf32_Shdr)*11)/* elfheader.e_shnum*/;
+	Elf32_Shdr *shdr = malloc(sizeof(Elf32_Shdr) * BigtoLittle16(header.e_shnum));
 	int num=0;
+	int err_fread=0;
 
-	if(f){
-		int err_fseek = fseek(f, header.e_shoff, SEEK_SET);
-		if(err_fseek==0){
+	if(file){
+		printf("%li", ftell(file));
+		int err_fseek = fseek(file, BigtoLittle32(header.e_shoff), SEEK_SET);
+		printf(" | %li\n", ftell(file));
+		if(err_fseek!=0){
 			printf("Erreur recherche table des sections\n");
 		}
-		int err_fread = fread(elf_sec_table, sizeof(Elf32_Shdr) * 11/* elfheader.e_shnum*/, 1, f);
-		if(err_fread==0){
-			printf("Erreur lecture table des sections\n");
+		for(num=0;num < BigtoLittle16(header.e_shnum) ; num++){
+			err_fread = fread(shdr,sizeof(Elf32_Shdr), BigtoLittle16(header.e_shnum), file);
+			if(err_fread!=BigtoLittle16(header.e_shnum)){
+				printf("Erreur lecture table des sections (%d / %d read)\n", num+1, BigtoLittle16(header.e_shnum));
+				/*exit(0);*/
+			}
 		}
-	}
-	for(num=0;num < 11 /* elfheader.e_shnum*/ ; num++){
+	
+	
+	}	
+	
+	for(num=0;num < BigtoLittle16(header.e_shnum) ; num++){
 		printf("[%d]", num);
-		printf("%hx  ", elf_sec_table[num].sh_name);
-		printf("%hx  ", elf_sec_table[num].sh_type);
-		printf("%hx  ", elf_sec_table[num].sh_addr);
-		printf("%hx  ", elf_sec_table[num].sh_offset);
-		printf("%hx  ", elf_sec_table[num].sh_size);
-		printf("%hx  ", elf_sec_table[num].sh_entsize);
-		printf("%hx  ", elf_sec_table[num].sh_flags);
-		printf("%hx  ", elf_sec_table[num].sh_link);
-		printf("%hx  ", elf_sec_table[num].sh_info);
-		printf("%hx  \n", elf_sec_table[num].sh_addralign); 
-
-	}
-
-
+		printf("\t%d  ", BigtoLittle32(shdr[num].sh_name));
+		printf("\t%#02x  ", BigtoLittle32(shdr[num].sh_type));
+		printf("\t%#02x  ", BigtoLittle32(shdr[num].sh_addr));
+		printf("\t%d  ", BigtoLittle32(shdr[num].sh_offset));
+		printf("\t%d  ", BigtoLittle32(shdr[num].sh_size));
+		printf("\t%d  ", BigtoLittle32(shdr[num].sh_entsize));
+		printf("\t%d  ", BigtoLittle32(shdr[num].sh_flags));
+		printf("\t%d  ", BigtoLittle32(shdr[num].sh_link));
+		printf("\t%d  ", BigtoLittle32(shdr[num].sh_info));
+		printf("\t%d  \n", BigtoLittle32(shdr[num].sh_addralign)); 
 }
 
 
+}
