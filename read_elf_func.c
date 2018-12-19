@@ -186,7 +186,7 @@ void affiche_tableSection(Elf32_Ehdr header,FILE *file){
 					break;
 				case SHT_ARM_ATTRIBUTES  :sec_type="ARM_ATTRIBUTES";
 			}
-			while(shflag!=0){
+			if(shflag!=0){
 				if(shflag>=SHF_MASKPROC){
 					shflag=shflag-SHF_MASKPROC;
 					strcat(flag,"M");
