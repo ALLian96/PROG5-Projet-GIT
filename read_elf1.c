@@ -123,18 +123,18 @@ int main(int argc,char* argv[]){
 		Elf32_Shdr section;		
 		Elf32_Shdr strtab;
 		char* sec_type="";
-		char* flag="";
-    		fseek(file, shoff + shstrndx*shentsize, SEEK_SET);
-    		fread(&strtab, sizeof(char), sizeof(Elf32_Shdr), file);//get the string table header
-    		fseek(file, swap_uint32(strtab.sh_offset), SEEK_SET);
-    		unsigned char* strtable = (unsigned char *)malloc(sizeof(unsigned char)*swap_uint32(strtab.sh_size));
-    		fread(strtable, sizeof(char), swap_uint32(strtab.sh_size), file);	
+    	fseek(file, shoff + shstrndx*shentsize, SEEK_SET);
+    	fread(&strtab, sizeof(char), sizeof(Elf32_Shdr), file);//get the string table header
+    	fseek(file, swap_uint32(strtab.sh_offset), SEEK_SET);
+    	unsigned char* strtable = (unsigned char *)malloc(sizeof(unsigned char)*swap_uint32(strtab.sh_size));
+    	fread(strtable, sizeof(char), swap_uint32(strtab.sh_size), file);	
 
 		printf("Il y a %d en-tetes de sections, debutant a l'adresse de decalage %#x\n\n",swap_uint16(header.e_shnum),swap_uint32(header.e_shoff));
 		printf("En-tetes de section:\n");
 		printf("[Nr] Nom                 Type           Adr      Decal  Taille ES Fan LN Inf Al\n");
 		fseek(file,swap_uint32(header.e_shoff),SEEK_SET);
 		for(i=0;i<sechnum;i++){
+			char* flag=malloc(sizeof(char)*4);
 			fread(&section,sizeof(char),sizeof(Elf32_Shdr),file);
 			shflag=swap_uint32(section.sh_flags);
 			switch(swap_uint32(section.sh_type)){
@@ -164,41 +164,41 @@ int main(int argc,char* argv[]){
 					break;
 				case SHT_NUM     :sec_type="NUM           ";
 					break;
-	                	case SHT_ARM_ATTRIBUTES  :sec_type="ARM_ATTRIBUTES";
+				case SHT_ARM_ATTRIBUTES  :sec_type="ARM_ATTRIBUTES";
 			}
 			while(shflag!=0){
-				int j=0;
-				if(shflag> SHF_EXECINSTR){
+				if(shflag>=SHF_MASKPROC){
+					shflag=shflag-SHF_MASKPROC;
+					strcat(flag,"M");
+				}
+				if(shflag>=SHF_EXECINSTR){
 					shflag=shflag-SHF_EXECINSTR;
-					flag[j]="X";
-					j++;
+					strcat(flag,"X");
 				}
-				if(shflag> SHF_ALLOC){
+				if(shflag>=SHF_ALLOC){
 					shflag=shflag-SHF_ALLOC;
-					flag[j]="A";
-					j++;
+					strcat(flag,"A");
 				}
-				if(shflag> SHF_WRITE){
+				if(shflag>=SHF_WRITE){
 					shflag=shflag-SHF_WRITE;
-					flag[j]="W";
-					j++;
+					strcat(flag,"W");
 				}	
 			}	
 			printf("[%2d] ",i);
 			printf("%-20.20s", strtable+swap_uint32(section.sh_name));
-        		printf("%s ",sec_type);        	
-        		printf("%08x ",  swap_uint32(section.sh_addr));
-        		printf("%06x ",  swap_uint32(section.sh_offset));
-        		printf("%06x ",  swap_uint32(section.sh_size));
-			printf("%02x ",  swap_uint32(section.sh_entsize));
-			printf("%3d ",  swap_uint32(section.sh_flags));
-        		printf("%2d ",  swap_uint32(section.sh_link));
-        		printf("%2d ",  swap_uint32(section.sh_info));
-        		printf("%2d \n",  swap_uint32(section.sh_addralign));
-        		
+        	printf("%s ",sec_type);        	
+        	printf("%08x ",swap_uint32(section.sh_addr));
+        	printf("%06x ",  swap_uint32(section.sh_offset));
+        	printf("%06x ",  swap_uint32(section.sh_size));
+		printf("%02x ",  swap_uint32(section.sh_entsize));
+		printf("%3s ",flag);
+        	printf("%2d ",  swap_uint32(section.sh_link));
+        	printf("%2d ",  swap_uint32(section.sh_info));
+        	printf("%2d \n",  swap_uint32(section.sh_addralign));
+        	free(flag);
    		}
 
-
+		free(strtable);
 	}
 
 
@@ -206,5 +206,3 @@ int main(int argc,char* argv[]){
 }
 
 
-
-			
