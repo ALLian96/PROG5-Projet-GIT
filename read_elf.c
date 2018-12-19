@@ -3,12 +3,12 @@
 #include "myelf.h"
 #include "read_elf_func.h"
 
-
 int main(int argc,char* argv[]){
 	Elf32_Ehdr header;
-	int n;
+	char c;
+	int out = 0;
 	FILE *file;
-        int EIMAG0=127;
+    int EIMAG0=127;
 	char EIMAG1='E';
 	char EIMAG2='L';
 	char EIMAG3='F';
@@ -16,33 +16,53 @@ int main(int argc,char* argv[]){
 	if(file==NULL){
 		printf("erreur.\n");
 		exit(1);
-	}
-	else{
+	}else{
 		fread(&header,1,sizeof(header),file);
-               if (header.e_ident[EI_MAG0] == EIMAG0 &&
-		   header.e_ident[EI_MAG1] == EIMAG1 &&
-		   header.e_ident[EI_MAG2] == EIMAG2 &&
-		   header.e_ident[EI_MAG3] == EIMAG3){
-                     printf("\n-----------------------\n");  
-                     printf("\n-        Menu         -\n"); 
-                     printf("\n-----------------------\n");      
-
-                     printf("\nAfficher l'entete <-------> 1\n");
+		if (header.e_ident[EI_MAG0] == EIMAG0 &&
+			header.e_ident[EI_MAG1] == EIMAG1 &&
+			header.e_ident[EI_MAG2] == EIMAG2 &&
+			header.e_ident[EI_MAG3] == EIMAG3){
 			
-                     scanf("%d",&n);
-                     switch(n){
-			case 1: affiche_header(header); break;
-			case 2: affiche_tableSection(header,file);break;
-                        default: printf("\nCe numero n'existe pas\n");
-		     }                    
-                        
-                      
+					
+			printf("-----------------------\n");  
+			printf("-        Menu         -\n"); 
+			printf("-----------------------\n");      
+			printf("Quitter : q\n");
+			printf("Afficher l'entete : h\n");
+			printf("Afficher l'entete des sectons : S\n");
+			
+			while(!out){
+
+				c=getc(stdin);
+			
+				switch(c){
+					case 'h': 
+						affiche_header(header); 
+						break;
+
+					case 'S':
+						affiche_tableSection(header, file);
+						break;
+					case 'Q': // Q
+					case 'q': // q
+						out = 1;
+						break;
+				
+				
+					default: 
+						printf("\nCette option n'existe pas\n");
+						break;
+				}
+
+			}
+
+		} else {
+			printf("\nC'est pas un fichier ELF\n");
 		}
-                else {
-                     printf("\nC'est pas un fichier ELF\n");
-                }
-                       	
+
 	}
+
+
       fclose(file);
 	return 0;
 }
