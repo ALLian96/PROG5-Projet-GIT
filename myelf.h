@@ -277,6 +277,7 @@ typedef struct elf64_phdr {
 #define SHT_SHLIB	10
 #define SHT_DYNSYM	11
 #define SHT_NUM		12
+#define SHT_ARM_ATTRIBUTES     0x70000003
 #define SHT_LOPROC	0x70000000
 #define SHT_HIPROC	0x7fffffff
 #define SHT_LOUSER	0x80000000
@@ -438,8 +439,6 @@ typedef struct elf64_note {
   Elf64_Word n_descsz;	/* Content size */
   Elf64_Word n_type;	/* Content type */
 } Elf64_Nhdr;
-
-
 
 #endif /* _UAPI_LINUX_ELF_H */
 
