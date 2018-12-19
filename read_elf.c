@@ -28,14 +28,13 @@ int main(int argc,char* argv[]){
                      printf("\n-----------------------\n");      
 
                      printf("\nAfficher l'entete <-------> 1\n");
+			
                      scanf("%d",&n);
                      switch(n){
-			case 1: printf("Invalid");
-                                 affiche_header(header); break;
-			case 2: affiche_affiche_tableSection(header,file);break;
+			case 1: affiche_header(header); break;
+			case 2: affiche_tableSection(header,file);break;
                         default: printf("\nCe numero n'existe pas\n");
-		     }
-                     
+		     }                    
                         
                       
 		}
