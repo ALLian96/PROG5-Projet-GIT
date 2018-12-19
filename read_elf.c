@@ -3,6 +3,7 @@
 #include "myelf.h"
 #include "read_elf_func.h"
 
+
 int main(int argc,char* argv[]){
 	Elf32_Ehdr header;
 	int n;
@@ -31,6 +32,7 @@ int main(int argc,char* argv[]){
                      switch(n){
 			case 1: printf("Invalid");
                                  affiche_header(header); break;
+			case 2: affiche_affiche_tableSection(header,file);break;
                         default: printf("\nCe numero n'existe pas\n");
 		     }
                      
