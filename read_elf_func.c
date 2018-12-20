@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <string.h> 
 #include <stdlib.h>
+#include <ctype.h>
 #include "read_elf_func.h"
-#include "conversion.h"
-
+#define N 16
 
 void affiche_Magic(Elf32_Ehdr header){
     for(int i=0;i<16;i++){
@@ -136,14 +136,14 @@ void affiche_header(Elf32_Ehdr header){
 		printf("\tTable d'indexes des chaines d'en-tete de section:\t%d\n",swap_uint16(header.e_shstrndx));
 }
 
-void affiche_tableSection(Elf32_Ehdr header,FILE *file){
+void affiche_tableSection(Elf32_Ehdr header,FILE *file, Elf32_Shdr *section){
 		int i;
 		int sechnum=swap_uint16(header.e_shnum);
 		int shoff=swap_uint32(header.e_shoff);
 		int shstrndx=swap_uint16(header.e_shstrndx);
 		int shentsize=swap_uint16(header.e_shentsize);
 		int shflag;
-		Elf32_Shdr *section = malloc(sizeof(Elf32_Shdr) * sechnum);;		
+		//Elf32_Shdr *section = malloc(sizeof(Elf32_Shdr) * sechnum);		
 		Elf32_Shdr strtab;
 		char* sec_type="";
     	fseek(file, shoff + shstrndx*shentsize, SEEK_SET);
@@ -158,7 +158,6 @@ void affiche_tableSection(Elf32_Ehdr header,FILE *file){
 		fseek(file,swap_uint32(header.e_shoff),SEEK_SET);
 		for(i=0;i<sechnum;i++){
 			char* flag=malloc(sizeof(char)*4);
-			fread(&section[i],sizeof(char),sizeof(Elf32_Shdr),file);
 			shflag=swap_uint32(section[i].sh_flags);
 			switch(swap_uint32(section[i].sh_type)){
 				case SHT_NULL    :sec_type="NULL          ";
@@ -220,12 +219,70 @@ void affiche_tableSection(Elf32_Ehdr header,FILE *file){
         	printf("%2d \n",  swap_uint32(section[i].sh_addralign));
         	free(flag);
    		}
-
+		
+		
 		free(strtable);
-
 }
 
 
 
+void affiche_contentSection(Elf32_Ehdr header,FILE *file,Elf32_Shdr *section){
+		
+		printf("%08x ",swap_uint32(section[1].sh_addr));
+		printf("%06x ",  swap_uint32(section[1].sh_offset));
+}
 
 
+void lire_Section_table(Elf32_Ehdr header,FILE *file,Elf32_Shdr *section){
+		int i;
+		int sechnum=swap_uint16(header.e_shnum);
+		fseek(file,swap_uint32(header.e_shoff),SEEK_SET);
+		for(i=0;i<sechnum;i++){			
+			fread(&section[i],sizeof(char),sizeof(Elf32_Shdr),file);
+		}
+}
+
+
+void hexdump(FILE *file,int addr,int size){
+
+  unsigned char buffer[N]; //Use unsigned char,prevent hex overflow.
+  int count,i,j;
+  j=addr;
+    setvbuf(file,NULL,_IOFBF,size);//Set max buffer size to 1024 bytes.
+
+  while(size!=0)//check the end of file.
+  {
+    count=fread(buffer,1,sizeof(buffer),file);
+        printf(" 0x%08x  ",j);//number in hex.
+        j+=16;
+        for(i=0;i<sizeof(buffer);i++)
+    {
+            if(i<count)
+            {
+        printf("%02x",buffer[i]);
+            }
+            else
+            {
+              printf("   ");
+            }
+	    if((i+1)%4==0){
+		printf(" ");
+	    } 
+    }
+    printf("| ");
+    for(i=0;i<sizeof(buffer);i++)
+    {
+            if(i<count)
+            {
+      printf("%c",isprint(buffer[i])?buffer[i]:'.');
+            }
+            else
+            {
+            printf(" ");
+            }
+    }
+    printf("|");
+    printf("\n");
+    size-=16;
+  }
+}

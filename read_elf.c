@@ -3,6 +3,7 @@
 #include "myelf.h"
 #include "read_elf_func.h"
 
+
 int main(int argc,char* argv[]){
 	Elf32_Ehdr header;
 	char c;
@@ -30,6 +31,9 @@ int main(int argc,char* argv[]){
 			printf("Quitter : q\n");
 			printf("Afficher l'entete : h\n");
 			printf("Afficher l'entete des sectons : S\n");
+			Elf32_Shdr *section = malloc(sizeof(Elf32_Shdr) * swap_uint16(header.e_shnum));
+			//récupérer le contenu de section table
+			lire_Section_table(header,file,section);
 			
 			while(!out){
 
@@ -41,13 +45,14 @@ int main(int argc,char* argv[]){
 						break;
 
 					case 'S':
-						affiche_tableSection(header, file);
+						affiche_tableSection(header, file,section);
 						break;
+					case 'x':
+						affiche_contentSection(header,file,section);
 					case 'Q': // Q
 					case 'q': // q
 						out = 1;
 						break;
-				
 				
 					default: 
 						printf("\nCette option n'existe pas\n");
