@@ -225,26 +225,3 @@ void affiche_tableSection(Elf32_Ehdr header,FILE *file){
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
