@@ -143,13 +143,13 @@ void affiche_tableSection(Elf32_Ehdr header,FILE *file, Elf32_Shdr *section){
 		int shstrndx=swap_uint16(header.e_shstrndx);
 		int shentsize=swap_uint16(header.e_shentsize);
 		int shflag;
-		//Elf32_Shdr *section = malloc(sizeof(Elf32_Shdr) * sechnum);		
-		Elf32_Shdr strtab;
 		char* sec_type="";
-    	fseek(file, shoff + shstrndx*shentsize, SEEK_SET);
-    	fread(&strtab, sizeof(char), sizeof(Elf32_Shdr), file);//get the string table header
-    	fseek(file, swap_uint32(strtab.sh_offset), SEEK_SET);
-    	unsigned char* strtable = (unsigned char *)malloc(sizeof(unsigned char)*swap_uint32(strtab.sh_size));
+		Elf32_Shdr strtab;
+		
+    	fseek(file, shoff + shstrndx*shentsize, SEEK_SET);/
+    	fread(&strtab, sizeof(char), sizeof(Elf32_Shdr), file);//get the string table header/
+    	fseek(file, swap_uint32(strtab.sh_offset), SEEK_SET);/
+    	unsigned char* strtable = malloc(sizeof(unsigned char)*swap_uint32(strtab.sh_size));
     	fread(strtable, sizeof(char), swap_uint32(strtab.sh_size), file);	
 
 		printf("Il y a %d en-tetes de sections, debutant a l'adresse de decalage %#x\n\n",swap_uint16(header.e_shnum),swap_uint32(header.e_shoff));
@@ -226,13 +226,6 @@ void affiche_tableSection(Elf32_Ehdr header,FILE *file, Elf32_Shdr *section){
 
 
 
-void affiche_contentSection(Elf32_Ehdr header,FILE *file,Elf32_Shdr *section){
-		
-		printf("%08x ",swap_uint32(section[1].sh_addr));
-		printf("%06x ",  swap_uint32(section[1].sh_offset));
-}
-
-
 void lire_Section_table(Elf32_Ehdr header,FILE *file,Elf32_Shdr *section){
 		int i;
 		int sechnum=swap_uint16(header.e_shnum);
@@ -240,49 +233,54 @@ void lire_Section_table(Elf32_Ehdr header,FILE *file,Elf32_Shdr *section){
 		for(i=0;i<sechnum;i++){			
 			fread(&section[i],sizeof(char),sizeof(Elf32_Shdr),file);
 		}
-}
+} 
 
 
-void hexdump(FILE *file,int addr,int size){
+void myhexdump(FILE *file,int addr,int size){
 
   unsigned char buffer[N]; //Use unsigned char,prevent hex overflow.
-  int count,i,j;
+  int i,j;
   j=addr;
-    setvbuf(file,NULL,_IOFBF,size);//Set max buffer size to 1024 bytes.
+  // setvbuf(file,NULL,_IOFBF,size);//Set max buffer size to 1024 bytes.
 
   while(size!=0)//check the end of file.
   {
-    count=fread(buffer,1,sizeof(buffer),file);
-        printf(" 0x%08x  ",j);//number in hex.
-        j+=16;
-        for(i=0;i<sizeof(buffer);i++)
-    {
-            if(i<count)
-            {
-        printf("%02x",buffer[i]);
-            }
-            else
-            {
-              printf("   ");
-            }
-	    if((i+1)%4==0){
+    fread(buffer,1,sizeof(buffer),file);
+    printf(" 0x%08x  ",j);//number in hex.
+    j+=16;
+    for(i=0;i<sizeof(buffer);i++){
+    	printf("%02x",buffer[i]);
+  
+       
+	if((i+1)%4==0){
 		printf(" ");
-	    } 
+	} 
     }
     printf("| ");
-    for(i=0;i<sizeof(buffer);i++)
-    {
-            if(i<count)
-            {
-      printf("%c",isprint(buffer[i])?buffer[i]:'.');
-            }
-            else
-            {
-            printf(" ");
-            }
+
+    for(i=0;i<sizeof(buffer);i++){
+      	printf("%c",isprint(buffer[i])?buffer[i]:'.');
+
     }
     printf("|");
     printf("\n");
     size-=16;
   }
 }
+
+void affiche_contentSection(Elf32_Ehdr header,FILE *file,Elf32_Shdr *section){
+		
+		int n;
+		printf("entrez un nombre ou un nom de section pour afficher le contenu.\n");		
+		scanf("%d",&n);
+		
+		char *name= strtable+swap_uint32(section[n].sh_name);
+		int addr=swap_uint32(section[n].sh_addr);
+        	int offset=swap_uint32(section[n].sh_offset);
+        	int size=swap_uint32(section[n].sh_size);
+		printf("Vidange hexadécimale de la section « %s »:\n",name);
+		fseek(file, offset, SEEK_SET);
+		myhexdump(file,addr,size);
+		free(strtable);
+}
+

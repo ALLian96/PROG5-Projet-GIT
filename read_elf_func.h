@@ -17,5 +17,6 @@ void affiche_tableSection(Elf32_Ehdr header,FILE *file,Elf32_Shdr *section);
 void lire_Section_table(Elf32_Ehdr header,FILE *file,Elf32_Shdr *section);
 
 //Step3
+void myhexdump(FILE *file,int addr,int size);
 void affiche_contentSection(Elf32_Ehdr header,FILE *file,Elf32_Shdr *section);
-void hexdump(FILE *file,int addr,int size);
+
