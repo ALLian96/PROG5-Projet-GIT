@@ -119,6 +119,9 @@ void affiche_header(Elf32_Ehdr header){
 		printf("\tmachine:\t\t\t");
                 affiche_Machine(header);
 
+		int W=0; // Debug purposes
+		int ait=W; // Debug purposes
+		ait+=ait;
 
                 printf("\n\tObjet file version:            \t\t\t%#02x\n",swap_uint32(header.e_version));
 		printf("\tAdresse du point d'entree:     \t\t\t%#02x\n",swap_uint32(header.e_entry));
@@ -140,7 +143,7 @@ void affiche_tableSection(Elf32_Ehdr header,FILE *file){
 		int shstrndx=swap_uint16(header.e_shstrndx);
 		int shentsize=swap_uint16(header.e_shentsize);
 		int shflag;
-		Elf32_Shdr section;		
+		Elf32_Shdr *section = malloc(sizeof(Elf32_Shdr) * sechnum);;		
 		Elf32_Shdr strtab;
 		char* sec_type="";
     	fseek(file, shoff + shstrndx*shentsize, SEEK_SET);
@@ -155,9 +158,9 @@ void affiche_tableSection(Elf32_Ehdr header,FILE *file){
 		fseek(file,swap_uint32(header.e_shoff),SEEK_SET);
 		for(i=0;i<sechnum;i++){
 			char* flag=malloc(sizeof(char)*4);
-			fread(&section,sizeof(char),sizeof(Elf32_Shdr),file);
-			shflag=swap_uint32(section.sh_flags);
-			switch(swap_uint32(section.sh_type)){
+			fread(&section[i],sizeof(char),sizeof(Elf32_Shdr),file);
+			shflag=swap_uint32(section[i].sh_flags);
+			switch(swap_uint32(section[i].sh_type)){
 				case SHT_NULL    :sec_type="NULL          ";
 					break;
 				case SHT_PROGBITS:sec_type="PROGBITS      ";
@@ -205,22 +208,23 @@ void affiche_tableSection(Elf32_Ehdr header,FILE *file){
 				}	
 			}	
 			printf("[%2d] ",i);
-			printf("%-20.20s", strtable+swap_uint32(section.sh_name));
+			printf("%-20.20s", strtable+swap_uint32(section[i].sh_name));
         	printf("%s ",sec_type);        	
-        	printf("%08x ",swap_uint32(section.sh_addr));
-        	printf("%06x ",  swap_uint32(section.sh_offset));
-        	printf("%06x ",  swap_uint32(section.sh_size));
-		printf("%02x ",  swap_uint32(section.sh_entsize));
+        	printf("%08x ",swap_uint32(section[i].sh_addr));
+        	printf("%06x ",  swap_uint32(section[i].sh_offset));
+        	printf("%06x ",  swap_uint32(section[i].sh_size));
+		printf("%02x ",  swap_uint32(section[i].sh_entsize));
 		printf("%3s ",flag);
-        	printf("%2d ",  swap_uint32(section.sh_link));
-        	printf("%2d ",  swap_uint32(section.sh_info));
-        	printf("%2d \n",  swap_uint32(section.sh_addralign));
+        	printf("%2d ",  swap_uint32(section[i].sh_link));
+        	printf("%2d ",  swap_uint32(section[i].sh_info));
+        	printf("%2d \n",  swap_uint32(section[i].sh_addralign));
         	free(flag);
    		}
 
 		free(strtable);
 
 }
+
 
 
 
