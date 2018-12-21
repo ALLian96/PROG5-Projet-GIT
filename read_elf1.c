@@ -190,7 +190,6 @@ int main(int argc,char* argv[]){
     	fseek(file, swap_uint32(strtab.sh_offset), SEEK_SET);
     	unsigned char* strtable = (unsigned char *)malloc(sizeof(unsigned char)*swap_uint32(strtab.sh_size));
     	fread(strtable, sizeof(char), swap_uint32(strtab.sh_size), file);	
-	printf("Taille de Tom%d \n",sizeof(strtable));
 
 		printf("Il y a %d en-tetes de sections, debutant a l'adresse de decalage %#x\n\n",swap_uint16(header.e_shnum),swap_uint32(header.e_shoff));
 		printf("En-tetes de section:\n");
@@ -261,12 +260,10 @@ int main(int argc,char* argv[]){
         		free(flag);
    		}
 //etape 3
+/*
 		printf("entrez un nombre de section pour afficher le contenu.\n");
 		scanf("%d",&n);
-		
-			printf("Tom :%s\n",strtable+6);
 		char *name=strtable+swap_uint32(section[n].sh_name);
-
 		int addr=swap_uint32(section[n].sh_addr);
         	int offset=swap_uint32(section[n].sh_offset);
         	int size=swap_uint32(section[n].sh_size);
@@ -274,7 +271,7 @@ int main(int argc,char* argv[]){
 		printf("addr:%x offset:%x size:%x\n",addr,offset,size);
 		fseek(file, offset, SEEK_SET);
 		hexdump(file,addr,size);
-		
+*/		
 
 //etape 4
 		/*Elf32_Shdr symstrtab;
@@ -296,16 +293,21 @@ printf("sym:%d str:%d\n",indice_sym,indice_str);
 		int nbsym=symsize/swap_uint32(section[indice_sym].sh_entsize);
 		
 		Elf32_Sym *symtab=malloc(sizeof(Elf32_Sym) * nbsym);
+
 		printf("%s a %d entree\n", sym_name,nbsym);
+
 		fseek(file, shoff + indice_str*shentsize, SEEK_SET);
     		fread(&symstrtab, sizeof(char), sizeof(Elf32_Shdr), file);//symble string table
+
     		fseek(file, swap_uint32(symstrtab.sh_offset), SEEK_SET);
     		unsigned char* strtab_sym = malloc(sizeof(unsigned char)*swap_uint32(symstrtab.sh_size));
     		fread(strtab_sym, sizeof(char), swap_uint32(symstrtab.sh_size), file);
 		fseek(file, symoff, SEEK_SET);
 		printf("[Nr] value    size  Type     Vis       Bind   ndex  Nom\n");
 		for(i=0;i<nbsym;i++){
+
     			fread(&symtab[i],1, sizeof(Elf32_Sym),file);//get the symbol table
+
 			switch(ELF32_ST_BIND(symtab[i].st_info)){
 				case STB_LOCAL    :bind="LOCAL ";
 					break;
@@ -340,6 +342,7 @@ printf("sym:%d str:%d\n",indice_sym,indice_str);
 				case STV_PROTECTED    :visi="PROTECTED ";
 					break;
 			}
+
 			printf("[%2d] ",i);
 			printf("%08x ",swap_uint32(symtab[i].st_value));
         		printf("%x     ",swap_uint32(symtab[i].st_size));
@@ -349,6 +352,26 @@ printf("sym:%d str:%d\n",indice_sym,indice_str);
         		printf("%x ",  swap_uint16(symtab[i].st_shndx));
         		printf("%-15s\n", strtab_sym+swap_uint32(symtab[i].st_name));
 		}*/
+
+//etape 5
+	char* rel_name;
+	int relsize;
+	int reloff;
+	int nbrel;
+printf("relocable.\n");
+	for(i=0;i<sechnum;i++){
+		if(swap_uint32(section[i].sh_type)==SHT_REL){
+printf("rel.%d\n",i);
+		rel_name=strtable+swap_uint32(section[i].sh_name);
+		reloff=swap_uint32(section[i].sh_offset);
+		relsize=swap_uint32(section[i].sh_size);
+		nbrel=relsize/swap_uint32(section[i].sh_entsize);
+		printf("Section de relocalisation '%s' à l'adresse de décalage 0x%3x contient %d entrées:\n",rel_name,reloff,nbrel);
+
+		}
+	}
+
+
 	free(strtable);
 	}
 	fclose(file);
@@ -357,6 +380,4 @@ printf("sym:%d str:%d\n",indice_sym,indice_str);
 
 
 
-
 			
-
