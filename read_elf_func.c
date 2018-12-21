@@ -257,18 +257,24 @@ void affiche_tableSection(Elf32_info elf,FILE *file){
 					shflag=shflag-SHF_MASKPROC;
 					strcat(flag,"M");
 				}
-				if(shflag>=SHF_EXECINSTR){
-					shflag=shflag-SHF_EXECINSTR;
-					strcat(flag,"X");
+				if(shflag>=SHF_INFO_LINK){
+					shflag=SHF_INFO_LINK;
+					strcpy(flag, "I");
+
+				} else {	
+					if(shflag>=SHF_EXECINSTR){
+						shflag=shflag-SHF_EXECINSTR;
+						strcat(flag,"X");
+					}
+					if(shflag>=SHF_ALLOC){
+						shflag=shflag-SHF_ALLOC;
+						strcat(flag,"A");
+					}
+					if(shflag>=SHF_WRITE){
+						shflag=shflag-SHF_WRITE;
+						strcat(flag,"W");
+					}
 				}
-				if(shflag>=SHF_ALLOC){
-					shflag=shflag-SHF_ALLOC;
-					strcat(flag,"A");
-				}
-				if(shflag>=SHF_WRITE){
-					shflag=shflag-SHF_WRITE;
-					strcat(flag,"W");
-				}	
 			}	
 			printf("[%2d] ",i);
 			printf("%-20.20s", elf.strtable+elf.section[i].sh_name);
@@ -360,9 +366,3 @@ void affiche_contentSection(Elf32_info elf,FILE *file){
 		fseek(file, offset, SEEK_SET);
 		myhexdump(file,addr,size);
 }
-
-
-
-
-
-
