@@ -221,6 +221,25 @@ typedef __s64	Elf64_Sxword;
 #define ELF64_ST_BIND(x)	ELF_ST_BIND(x)
 #define ELF64_ST_TYPE(x)	ELF_ST_TYPE(x)
 
+/* Symbol table indices are found in the hash buckets and chain table
+   of a symbol hash table section.  This special index value indicates
+   the end of a chain, meaning no further symbols are found in that bucket.  */
+
+#define STN_UNDEF	0		/* End of a chain.  */
+
+
+/* How to extract and insert information held in the st_other field.  */
+
+#define ELF32_ST_VISIBILITY(o)	((o) & 0x03)
+
+/* For ELF64 the definitions are the same.  */
+#define ELF64_ST_VISIBILITY(o)	ELF32_ST_VISIBILITY (o)
+/* Symbol visibility specification encoded in the st_other field.  */
+#define STV_DEFAULT	0		/* Default symbol visibility rules */
+#define STV_INTERNAL	1		/* Processor specific hidden class */
+#define STV_HIDDEN	2		/* Sym unavailable in other modules */
+#define STV_PROTECTED	3		/* Not preemptible, not exported */
+
 typedef struct dynamic{
   Elf32_Sword d_tag;
   union{
