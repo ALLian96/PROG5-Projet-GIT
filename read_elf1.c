@@ -9,46 +9,64 @@
 void hexdump(FILE *file,int addr,int size){
 
   unsigned char buffer[N]; //Use unsigned char,prevent hex overflow.
-  int count,i,j;
-  j=addr;
-    setvbuf(file,NULL,_IOFBF,size);//Set max buffer size to 1024 bytes.
+  int count,i;
 
-  while(size!=0)//check the end of file.
-  {
-    count=fread(buffer,1,sizeof(buffer),file);
-        printf(" 0x%08x  ",j);//number in hex.
-        j+=16;
-        for(i=0;i<sizeof(buffer);i++)
-    {
-            if(i<count)
-            {
-        printf("%02x",buffer[i]);
+  while(size>sizeof(buffer)){
+    	count=fread(buffer,1,sizeof(buffer),file);
+        printf(" 0x%08x  ",addr);//number in hex.
+        addr+=16;
+        for(i=0;i<sizeof(buffer);i++){
+            if(i<count){
+                printf("%02x",buffer[i]);
             }
-            else
-            {
-              printf("   ");
+            else{
+                printf("   ");
             }
 	    if((i+1)%4==0){
 		printf(" ");
 	    } 
-    }
-    printf("| ");
-    for(i=0;i<sizeof(buffer);i++)
-    {
-            if(i<count)
-            {
-      printf("%c",isprint(buffer[i])?buffer[i]:'.');
+         }
+    	printf("| ");
+    	for(i=0;i<sizeof(buffer);i++){
+            if(i<count){
+      		printf("%c",isprint(buffer[i])?buffer[i]:'.');
             }
-            else
-            {
-            printf(" ");
+            else{
+                printf(" ");
             }
-    }
-    printf("|");
-    printf("\n");
-    size-=16;
+    	}
+   	printf("|");
+    	printf("\n");
+    	size-=16;
   }
+    	fread(buffer,1,size,file);
+        printf(" 0x%08x  ",addr);//number in hex.
+        addr+=16;
+        for(i=0;i<N;i++){
+            if(i<size){
+                printf("%02x",buffer[i]);
+            }
+            else{
+                printf("  ");
+            }
+	    if((i+1)%4==0){
+		printf(" ");
+	    } 
+         }
+    	printf("| ");
+    	for(i=0;i<N;i++){
+            if(i<size){
+      		printf("%c",isprint(buffer[i])?buffer[i]:'.');
+            }
+            else{
+                printf(" ");
+            }
+	}
+   	printf("|");
+    	printf("\n");
+
 }
+
 int main(int argc,char* argv[]){
 	Elf32_Ehdr header;
 	int i,n;
@@ -244,17 +262,18 @@ int main(int argc,char* argv[]){
 //etape 3
 		printf("entrez un nombre de section pour afficher le contenu.\n");
 		scanf("%d",&n);
-		char *name=strtable+swap_uint32(section[8].sh_name);
+		char *name=strtable+swap_uint32(section[n].sh_name);
 		int addr=swap_uint32(section[n].sh_addr);
         	int offset=swap_uint32(section[n].sh_offset);
         	int size=swap_uint32(section[n].sh_size);
 		printf("Vidange hexadécimale de la section « %s »:\n",name);
+		printf("addr:%x offset:%x size:%x\n",addr,offset,size);
 		fseek(file, offset, SEEK_SET);
 		hexdump(file,addr,size);
 		
 
 //etape 4
-		Elf32_Shdr symstrtab;
+		/*Elf32_Shdr symstrtab;
 		printf("symbol table\n");
 		int indice_sym=0,indice_str=0;
 		char* bind="";
@@ -331,11 +350,10 @@ printf("sym:%d str:%d\n",indice_sym,indice_str);
 			printf("%s ",visi);
         		printf("%x ",  swap_uint16(symtab[i].st_shndx));
         		printf("%-15s\n", strtab_sym+swap_uint32(symtab[i].st_name));
-		}
+		}*/
 	free(strtable);
 	}
-
-	
+	fclose(file);
 	return 0;
 }
 
