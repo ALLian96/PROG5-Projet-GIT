@@ -30,8 +30,8 @@ void affiche_tableSection(Elf32_info elf,FILE *file);
 //Step3
 void myhexdump(FILE *file,int addr,int size);
 void affiche_contentSection(Elf32_info elf,FILE *file);
+int get_section(Elf32_info elf, char * nom);
 
 
 //Stpep4
 void affiche_table_Symboles(Elf32_Shdr header,FILE *file);
-

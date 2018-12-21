@@ -354,15 +354,66 @@ void myhexdump(FILE *file,int addr,int size){
 }
 
 void affiche_contentSection(Elf32_info elf,FILE *file){
-		
+		char nom[32];
 		int n;
-		printf("entrez un nombre ou un nom de section pour afficher le contenu.\n");		
-		scanf("%d",&n);
-		unsigned char *name= elf.strtable+(elf.section[n].sh_name);
-		int addr=elf.section[n].sh_addr;
-        	int offset=elf.section[n].sh_offset;
-        	int size=elf.section[n].sh_size;
-		printf("Vidange hexadécimale de la section « %s »:\n",name);
-		fseek(file, offset, SEEK_SET);
-		myhexdump(file,addr,size);
+		printf("Entrez un nombre ou un nom de section pour afficher le contenu.\n");		
+		scanf("%s",nom);
+		
+		n = get_section(elf, nom);
+		
+		if(n>=0){
+			unsigned char *name= elf.strtable+(elf.section[n].sh_name);
+			int addr=elf.section[n].sh_addr;
+		    	int offset=elf.section[n].sh_offset;
+		    	int size=elf.section[n].sh_size;
+			printf("Vidange hexadécimale de la section « %s (%d)»:\n",name, n);
+			fseek(file, offset, SEEK_SET);
+			myhexdump(file,addr,size);
+
+		} else {
+			printf("Erreur, nom de table inexistante\n");
+		
+		}
+		
 }
+
+
+int get_section_number(Elf32_info elf, char * nom){
+	int i;
+	if((nom[0]==46)){
+		
+		for(i=0;i<elf.header.e_shnum;i++){
+			if(!strcmp(nom,(char *)elf.strtable+(elf.section[i].sh_name))){
+				return i;
+			}
+		}	
+	} else if(nom[0]>='0' && nom[0]<='9'){
+		return nom[0]-'0';
+	}
+	return -1;
+		
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
