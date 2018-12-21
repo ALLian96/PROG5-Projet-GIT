@@ -9,46 +9,64 @@
 void hexdump(FILE *file,int addr,int size){
 
   unsigned char buffer[N]; //Use unsigned char,prevent hex overflow.
-  int count,i,j;
-  j=addr;
-    setvbuf(file,NULL,_IOFBF,size);//Set max buffer size to 1024 bytes.
+  int count,i;
 
-  while(size!=0)//check the end of file.
-  {
-    count=fread(buffer,1,sizeof(buffer),file);
-        printf(" 0x%08x  ",j);//number in hex.
-        j+=16;
-        for(i=0;i<sizeof(buffer);i++)
-    {
-            if(i<count)
-            {
-        printf("%02x",buffer[i]);
+  while(size>sizeof(buffer)){
+    	count=fread(buffer,1,sizeof(buffer),file);
+        printf(" 0x%08x  ",addr);//number in hex.
+        addr+=16;
+        for(i=0;i<sizeof(buffer);i++){
+            if(i<count){
+                printf("%02x",buffer[i]);
             }
-            else
-            {
-              printf("   ");
+            else{
+                printf("   ");
             }
 	    if((i+1)%4==0){
 		printf(" ");
 	    } 
-    }
-    printf("| ");
-    for(i=0;i<sizeof(buffer);i++)
-    {
-            if(i<count)
-            {
-      printf("%c",isprint(buffer[i])?buffer[i]:'.');
+         }
+    	printf("| ");
+    	for(i=0;i<sizeof(buffer);i++){
+            if(i<count){
+      		printf("%c",isprint(buffer[i])?buffer[i]:'.');
             }
-            else
-            {
-            printf(" ");
+            else{
+                printf(" ");
             }
-    }
-    printf("|");
-    printf("\n");
-    size-=16;
+    	}
+   	printf("|");
+    	printf("\n");
+    	size-=16;
   }
+    	fread(buffer,1,size,file);
+        printf(" 0x%08x  ",addr);//number in hex.
+        addr+=16;
+        for(i=0;i<N;i++){
+            if(i<size){
+                printf("%02x",buffer[i]);
+            }
+            else{
+                printf("  ");
+            }
+	    if((i+1)%4==0){
+		printf(" ");
+	    } 
+         }
+    	printf("| ");
+    	for(i=0;i<N;i++){
+            if(i<size){
+      		printf("%c",isprint(buffer[i])?buffer[i]:'.');
+            }
+            else{
+                printf(" ");
+            }
+	}
+   	printf("|");
+    	printf("\n");
+
 }
+
 int main(int argc,char* argv[]){
 	Elf32_Ehdr header;
 	int i,n;
@@ -253,12 +271,13 @@ int main(int argc,char* argv[]){
         	int offset=swap_uint32(section[n].sh_offset);
         	int size=swap_uint32(section[n].sh_size);
 		printf("Vidange hexadécimale de la section « %s »:\n",name);
+		printf("addr:%x offset:%x size:%x\n",addr,offset,size);
 		fseek(file, offset, SEEK_SET);
 		hexdump(file,addr,size);
 		
 
 //etape 4
-		Elf32_Shdr symstrtab;
+		/*Elf32_Shdr symstrtab;
 		printf("symbol table\n");
 		int indice_sym=0,indice_str=0;
 		char* bind="";
@@ -270,28 +289,23 @@ int main(int argc,char* argv[]){
 			if(swap_uint32(section[i].sh_type)==SHT_STRTAB && i!=shstrndx)
 				indice_str=i; 
 		}
-		printf("sym:%d str:%d\n",indice_sym,indice_str);
+printf("sym:%d str:%d\n",indice_sym,indice_str);
 		char* sym_name=strtable+swap_uint32(section[indice_sym].sh_name);
 		int symsize=swap_uint32(section[indice_sym].sh_size);
 		int symoff=swap_uint32(section[indice_sym].sh_offset);
 		int nbsym=symsize/swap_uint32(section[indice_sym].sh_entsize);
 		
 		Elf32_Sym *symtab=malloc(sizeof(Elf32_Sym) * nbsym);
-
 		printf("%s a %d entree\n", sym_name,nbsym);
-
 		fseek(file, shoff + indice_str*shentsize, SEEK_SET);
     		fread(&symstrtab, sizeof(char), sizeof(Elf32_Shdr), file);//symble string table
-
     		fseek(file, swap_uint32(symstrtab.sh_offset), SEEK_SET);
     		unsigned char* strtab_sym = malloc(sizeof(unsigned char)*swap_uint32(symstrtab.sh_size));
     		fread(strtab_sym, sizeof(char), swap_uint32(symstrtab.sh_size), file);
 		fseek(file, symoff, SEEK_SET);
 		printf("[Nr] value    size  Type     Vis       Bind   ndex  Nom\n");
 		for(i=0;i<nbsym;i++){
-
     			fread(&symtab[i],1, sizeof(Elf32_Sym),file);//get the symbol table
-
 			switch(ELF32_ST_BIND(symtab[i].st_info)){
 				case STB_LOCAL    :bind="LOCAL ";
 					break;
@@ -326,7 +340,6 @@ int main(int argc,char* argv[]){
 				case STV_PROTECTED    :visi="PROTECTED ";
 					break;
 			}
-
 			printf("[%2d] ",i);
 			printf("%08x ",swap_uint32(symtab[i].st_value));
         		printf("%x     ",swap_uint32(symtab[i].st_size));
@@ -335,13 +348,13 @@ int main(int argc,char* argv[]){
 			printf("%s ",visi);
         		printf("%x ",  swap_uint16(symtab[i].st_shndx));
         		printf("%-15s\n", strtab_sym+swap_uint32(symtab[i].st_name));
-		}
+		}*/
 	free(strtable);
 	}
-
-	
+	fclose(file);
 	return 0;
 }
+
 
 
 
