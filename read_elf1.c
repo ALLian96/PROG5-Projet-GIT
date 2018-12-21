@@ -172,6 +172,7 @@ int main(int argc,char* argv[]){
     	fseek(file, swap_uint32(strtab.sh_offset), SEEK_SET);
     	unsigned char* strtable = (unsigned char *)malloc(sizeof(unsigned char)*swap_uint32(strtab.sh_size));
     	fread(strtable, sizeof(char), swap_uint32(strtab.sh_size), file);	
+	printf("Taille de Tom%d \n",sizeof(strtable));
 
 		printf("Il y a %d en-tetes de sections, debutant a l'adresse de decalage %#x\n\n",swap_uint16(header.e_shnum),swap_uint32(header.e_shoff));
 		printf("En-tetes de section:\n");
@@ -244,20 +245,105 @@ int main(int argc,char* argv[]){
 //etape 3
 		printf("entrez un nombre de section pour afficher le contenu.\n");
 		scanf("%d",&n);
+		
+			printf("Tom :%s\n",strtable+6);
 		char *name=strtable+swap_uint32(section[n].sh_name);
+
 		int addr=swap_uint32(section[n].sh_addr);
         	int offset=swap_uint32(section[n].sh_offset);
         	int size=swap_uint32(section[n].sh_size);
 		printf("Vidange hexadécimale de la section « %s »:\n",name);
 		fseek(file, offset, SEEK_SET);
 		hexdump(file,addr,size);
-		free(strtable);
+		
+
+//etape 4
+		Elf32_Shdr symstrtab;
+		printf("symbol table\n");
+		int indice_sym=0,indice_str=0;
+		char* bind="";
+		char* type="";
+		char* visi="";
+		for(i=0;i<sechnum;i++){
+			if(swap_uint32(section[i].sh_type)==SHT_SYMTAB)
+				indice_sym=i;
+			if(swap_uint32(section[i].sh_type)==SHT_STRTAB && i!=shstrndx)
+				indice_str=i; 
+		}
+		printf("sym:%d str:%d\n",indice_sym,indice_str);
+		char* sym_name=strtable+swap_uint32(section[indice_sym].sh_name);
+		int symsize=swap_uint32(section[indice_sym].sh_size);
+		int symoff=swap_uint32(section[indice_sym].sh_offset);
+		int nbsym=symsize/swap_uint32(section[indice_sym].sh_entsize);
+		
+		Elf32_Sym *symtab=malloc(sizeof(Elf32_Sym) * nbsym);
+
+		printf("%s a %d entree\n", sym_name,nbsym);
+
+		fseek(file, shoff + indice_str*shentsize, SEEK_SET);
+    		fread(&symstrtab, sizeof(char), sizeof(Elf32_Shdr), file);//symble string table
+
+    		fseek(file, swap_uint32(symstrtab.sh_offset), SEEK_SET);
+    		unsigned char* strtab_sym = malloc(sizeof(unsigned char)*swap_uint32(symstrtab.sh_size));
+    		fread(strtab_sym, sizeof(char), swap_uint32(symstrtab.sh_size), file);
+		fseek(file, symoff, SEEK_SET);
+		printf("[Nr] value    size  Type     Vis       Bind   ndex  Nom\n");
+		for(i=0;i<nbsym;i++){
+
+    			fread(&symtab[i],1, sizeof(Elf32_Sym),file);//get the symbol table
+
+			switch(ELF32_ST_BIND(symtab[i].st_info)){
+				case STB_LOCAL    :bind="LOCAL ";
+					break;
+				case STB_GLOBAL    :bind="GLOBAL";
+					break;
+				case STB_WEAK    :bind="WEAK  ";
+					break;
+			 }
+			switch(ELF32_ST_TYPE(symtab[i].st_info)){
+				case STT_NOTYPE    :type="NOTYPE  ";
+					break;
+				case STT_OBJECT    :type="OBJECT  ";
+					break;
+				case STT_FUNC    :type="FUNC    ";
+					break;
+				case STT_SECTION    :type="SECTION ";
+					break;
+				case STT_FILE    :type="FILE    ";
+					break;
+				case STT_COMMON    :type="COMMON  ";
+					break;
+				case STT_TLS    :type="CTLS    ";
+					break;
+			}
+			switch(ELF32_ST_VISIBILITY(symtab[i].st_other)){
+				case STV_DEFAULT    :visi="DEFAULT   ";
+					break;
+				case STV_INTERNAL    :visi="INTERNAL  ";
+					break;
+				case STV_HIDDEN    :visi="HIDDEN    ";
+					break;
+				case STV_PROTECTED    :visi="PROTECTED ";
+					break;
+			}
+
+			printf("[%2d] ",i);
+			printf("%08x ",swap_uint32(symtab[i].st_value));
+        		printf("%x     ",swap_uint32(symtab[i].st_size));
+			printf("%s ",type);        	
+        		printf("%s ",bind);
+			printf("%s ",visi);
+        		printf("%x ",  swap_uint16(symtab[i].st_shndx));
+        		printf("%-15s\n", strtab_sym+swap_uint32(symtab[i].st_name));
+		}
+	free(strtable);
 	}
 
-
+	
 	return 0;
 }
 
 
 
 			
+
