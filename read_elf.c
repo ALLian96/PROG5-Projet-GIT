@@ -37,18 +37,18 @@ int main(int argc,char* argv[]){
 			printf("Afficher l'entete : h\n");
 			printf("Afficher l'entete des sectons : S\n");
 			printf("Afficher le contenu d'une section : x\n");
-			
+			printf("Afficher le table symbol : s\n");
 			
 			
 			
 			//récupère le contenu de la table des sections
 			
 			
-			
+			c=getc(stdin);
 			
 			while(!out){
 
-				c=getc(stdin);
+				
 			
 				switch(c){
 					case 'h': 
@@ -60,11 +60,11 @@ int main(int argc,char* argv[]){
 						break;
 
 					case 'x':
-						affiche_contentSection(elf,file);						
+						affiche_contentSection(elf,file);					
 						break;
 						
 					case 's':
-						//affiche_table_Symboles(elf.header, file);	
+						affiche_table_Symbol(elf,file);
 						break;
 
 					case 'Q': // Q
@@ -76,6 +76,7 @@ int main(int argc,char* argv[]){
 						printf("\nCette option n'existe pas\n");
 						break;
 				}
+				c=getc(stdin);
 
 			}
 

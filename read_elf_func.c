@@ -15,9 +15,19 @@ void initElf(Elf32_info *elf,FILE *file){
 	elf->section = malloc(sizeof(Elf32_Shdr) * swap_uint16(elf->header.e_shnum));
 	lire_Section_table(elf,file);
 	init_strtab(elf,file);
+	declaSymtab(elf);
+	init_symtable(elf,file);
+	lire_Symbol_table(elf,file);
 }	
 
-
+void declaSymtab(Elf32_info *elf){
+	int i;
+	int sechnum = elf->header.e_shnum;
+	for(i=0;i<sechnum;i++){
+		if(elf->section[i].sh_type==SHT_SYMTAB)
+		elf->symtab = malloc(sizeof(Elf32_Sym) * (elf->section[i].sh_size/elf->section[i].sh_entsize));
+	}
+}
 void lire_Section_table(Elf32_info *elf,FILE *file){
 		int i;
 		int sechnum=elf->header.e_shnum;
@@ -41,6 +51,44 @@ void lire_Section_table(Elf32_info *elf,FILE *file){
 		}
 } 
 
+void lire_Symbol_table(Elf32_info *elf,FILE *file){
+		int i;
+		int indice_sym=get_indice_sym(*elf);
+		int symsize=elf->section[indice_sym].sh_size;
+		int nbsym=symsize/elf->section[indice_sym].sh_entsize;
+
+		fseek(file, elf->section[indice_sym].sh_offset, SEEK_SET);
+		for(i=0;i<nbsym;i++){			
+			fread(&elf->symtab[i],1,sizeof(Elf32_Sym),file);
+			
+				elf->symtab[i].st_name = swap_uint32(elf->symtab[i].st_name);
+				elf->symtab[i].st_value = swap_uint32(elf->symtab[i].st_value);
+				elf->symtab[i].st_size = swap_uint32(elf->symtab[i].st_size);
+				elf->symtab[i].st_shndx = swap_uint16(elf->symtab[i].st_shndx);
+			
+		}
+} 
+
+int get_indice_sym(Elf32_info elf){
+	int i;
+	int sechnum=elf.header.e_shnum;
+	for(i=0;i<sechnum;i++){
+		if(elf.section[i].sh_type==SHT_SYMTAB)
+			return i;
+	}
+	return 0;
+}
+
+int get_indice_str(Elf32_info elf){
+	int i;
+	int sechnum=elf.header.e_shnum;
+	int shstrndx=elf.header.e_shstrndx;
+	for(i=0;i<sechnum;i++){
+		if(elf.section[i].sh_type==SHT_STRTAB && i!=shstrndx)
+			return i; 
+		}
+	return 0;
+}
 void init_strtab(Elf32_info *elf,FILE *file){
 
 	int shoff=elf->header.e_shoff;
@@ -58,6 +106,20 @@ void init_strtab(Elf32_info *elf,FILE *file){
 }
 
 
+void init_symtable(Elf32_info *elf,FILE *file){
+	int indice_str;
+	int shoff=elf->header.e_shoff;
+	int shentsize=elf->header.e_shentsize;
+	Elf32_Shdr sym_strtab;
+	indice_str=get_indice_str(*elf);
+
+	fseek(file, shoff + indice_str*shentsize, SEEK_SET);
+    	fread(&sym_strtab, sizeof(char), sizeof(Elf32_Shdr), file);//symble string table
+
+    	fseek(file, swap_uint32(sym_strtab.sh_offset), SEEK_SET);
+	elf->symtable = (unsigned char *)malloc(sizeof(unsigned char)*swap_uint32(sym_strtab.sh_size));
+    	fread(elf->symtable, sizeof(char), swap_uint32(sym_strtab.sh_size), file);	
+}
 //Step1
 void setup_little_endian(Elf32_info *elf){
 
@@ -353,13 +415,28 @@ void myhexdump(FILE *file,int addr,int size){
 
 }
 
+int get_section_number(Elf32_info elf, char * nom){
+	int i;
+	if((nom[0]==46)){
+		
+		for(i=0;i<elf.header.e_shnum;i++){
+			if(!strcmp(nom,(char *)elf.strtable+(elf.section[i].sh_name))){
+				return i;
+			}
+		}	
+	} else if(nom[0]>='0' && nom[0]<='9'){
+		return nom[0]-'0';
+	}
+	return -1;
+		
+}
 void affiche_contentSection(Elf32_info elf,FILE *file){
 		char nom[32];
 		int n;
 		printf("Entrez un nombre ou un nom de section pour afficher le contenu.\n");		
 		scanf("%s",nom);
 		
-		n = get_section(elf, nom);
+		n = get_section_number(elf, nom);
 		
 		if(n>=0){
 			unsigned char *name= elf.strtable+(elf.section[n].sh_name);
@@ -378,23 +455,68 @@ void affiche_contentSection(Elf32_info elf,FILE *file){
 }
 
 
-int get_section_number(Elf32_info elf, char * nom){
+
+
+void affiche_table_Symbol(Elf32_info elf,FILE *file){
 	int i;
-	if((nom[0]==46)){
-		
-		for(i=0;i<elf.header.e_shnum;i++){
-			if(!strcmp(nom,(char *)elf.strtable+(elf.section[i].sh_name))){
-				return i;
+	char* bind="";
+	char* type="";
+	char* visi="";
+	int indice_sym=get_indice_sym(elf);
+	int symsize=elf.section[indice_sym].sh_size;
+	int symoff=elf.section[indice_sym].sh_offset;
+	int nbsym=symsize/elf.section[indice_sym].sh_entsize;
+	printf("Table de symboles « %s » contient %d entrées:\n", elf.strtable+elf.section[indice_sym].sh_name,nbsym);
+	printf("[Nr] value    size  Type     Vis       Bind   ndex  Nom\n");
+
+	fseek(file, symoff, SEEK_SET);
+	for(i=0;i<nbsym;i++){
+
+			switch(ELF32_ST_BIND(elf.symtab[i].st_info)){
+				case STB_LOCAL    :bind="LOCAL ";
+					break;
+				case STB_GLOBAL    :bind="GLOBAL";
+					break;
+				case STB_WEAK    :bind="WEAK  ";
+					break;
+			 }
+			switch(ELF32_ST_TYPE(elf.symtab[i].st_info)){
+				case STT_NOTYPE    :type="NOTYPE  ";
+					break;
+				case STT_OBJECT    :type="OBJECT  ";
+					break;
+				case STT_FUNC    :type="FUNC    ";
+					break;
+				case STT_SECTION    :type="SECTION ";
+					break;
+				case STT_FILE    :type="FILE    ";
+					break;
+				case STT_COMMON    :type="COMMON  ";
+					break;
+				case STT_TLS    :type="CTLS    ";
+					break;
 			}
-		}	
-	} else if(nom[0]>='0' && nom[0]<='9'){
-		return nom[0]-'0';
-	}
-	return -1;
-		
+			switch(ELF32_ST_VISIBILITY(elf.symtab[i].st_other)){
+				case STV_DEFAULT    :visi="DEFAULT   ";
+					break;
+				case STV_INTERNAL    :visi="INTERNAL  ";
+					break;
+				case STV_HIDDEN    :visi="HIDDEN    ";
+					break;
+				case STV_PROTECTED    :visi="PROTECTED ";
+					break;
+			}
+
+			printf("[%2d] ",i);
+			printf("%08x ",elf.symtab[i].st_value);
+        		printf("%x     ",elf.symtab[i].st_size);
+			printf("%s ",type);        	
+        		printf("%s ",bind);
+			printf("%s ",visi);
+        		printf("%x ",  elf.symtab[i].st_shndx);
+        		printf("%-15s\n", elf.symtable+elf.symtab[i].st_name);
+		}
 }
-
-
 
 
 
