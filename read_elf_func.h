@@ -6,11 +6,13 @@ typedef struct{
 	Elf32_Shdr *section;
 	unsigned char *strtable;
 	Elf32_Sym  *symtab;
-	unsigned char *symtable;	
+	unsigned char *symtable;
+	Elf32_Rel  *reltab;	
 }Elf32_info;
 
 void initElf(Elf32_info *elf,FILE *file);
 void declaSymtab(Elf32_info *elf);
+void declaReltab(Elf32_info *elf);
 void lire_Section_table(Elf32_info *elf,FILE *file);
 void lire_Symbol_table(Elf32_info *elf,FILE *file);
 int get_indice_sym(Elf32_info elf);
@@ -41,3 +43,6 @@ int get_section(Elf32_info elf, char * nom);
 //Stpep4
 void init_symtable(Elf32_info *elf,FILE *file);
 void affiche_table_Symbol(Elf32_info elf,FILE *file);
+
+void lire_Relo_table(Elf32_info *elf,FILE *file,int indice_rel);
+void affiche_Relocation(Elf32_info *elf,FILE *file);

@@ -18,6 +18,7 @@ void initElf(Elf32_info *elf,FILE *file){
 	declaSymtab(elf);
 	init_symtable(elf,file);
 	lire_Symbol_table(elf,file);
+	declaReltab(elf);
 }	
 
 void declaSymtab(Elf32_info *elf){
@@ -26,6 +27,14 @@ void declaSymtab(Elf32_info *elf){
 	for(i=0;i<sechnum;i++){
 		if(elf->section[i].sh_type==SHT_SYMTAB)
 		elf->symtab = malloc(sizeof(Elf32_Sym) * (elf->section[i].sh_size/elf->section[i].sh_entsize));
+	}
+}
+void declaReltab(Elf32_info *elf){
+	int i;
+	int sechnum = elf->header.e_shnum;
+	for(i=0;i<sechnum;i++){
+		if(elf->section[i].sh_type==SHT_REL)
+		elf->reltab = malloc(sizeof(Elf32_Rel) * (elf->section[i].sh_size/elf->section[i].sh_entsize));
 	}
 }
 void lire_Section_table(Elf32_info *elf,FILE *file){
@@ -69,6 +78,18 @@ void lire_Symbol_table(Elf32_info *elf,FILE *file){
 		}
 } 
 
+void lire_Relo_table(Elf32_info *elf,FILE *file,int indice_rel){
+		int i;
+		int relsize=elf->section[indice_rel].sh_size;
+		int nbrel=relsize/elf->section[indice_rel].sh_entsize;
+
+		fseek(file, elf->section[indice_rel].sh_offset, SEEK_SET);
+		for(i=0;i<nbrel;i++){			
+			fread(&elf->reltab[i],1,sizeof(Elf32_Rel),file);
+			elf->reltab[i].r_offset = swap_uint32(elf->reltab[i].r_offset);	
+			elf->reltab[i].r_info = swap_uint32(elf->reltab[i].r_info);		
+		}
+} 
 int get_indice_sym(Elf32_info elf){
 	int i;
 	int sechnum=elf.header.e_shnum;
@@ -101,7 +122,7 @@ void init_strtab(Elf32_info *elf,FILE *file){
     	fread(&strtab, sizeof(char), sizeof(Elf32_Shdr), file);//get the string table header
 
     	fseek(file, swap_uint32(strtab.sh_offset), SEEK_SET);
-	elf->strtable = (unsigned char *)malloc(sizeof(unsigned char)*swap_uint32(strtab.sh_size));
+		elf->strtable = (unsigned char *)malloc(sizeof(unsigned char)*swap_uint32(strtab.sh_size));
     	fread(elf->strtable, sizeof(char), swap_uint32(strtab.sh_size), file);	
 }
 
@@ -114,12 +135,13 @@ void init_symtable(Elf32_info *elf,FILE *file){
 	indice_str=get_indice_str(*elf);
 
 	fseek(file, shoff + indice_str*shentsize, SEEK_SET);
-    	fread(&sym_strtab, sizeof(char), sizeof(Elf32_Shdr), file);//symble string table
-
-    	fseek(file, swap_uint32(sym_strtab.sh_offset), SEEK_SET);
+    fread(&sym_strtab, sizeof(char), sizeof(Elf32_Shdr), file);//symble string table
+    fseek(file, swap_uint32(sym_strtab.sh_offset), SEEK_SET);
 	elf->symtable = (unsigned char *)malloc(sizeof(unsigned char)*swap_uint32(sym_strtab.sh_size));
-    	fread(elf->symtable, sizeof(char), swap_uint32(sym_strtab.sh_size), file);	
+    fread(elf->symtable, sizeof(char), swap_uint32(sym_strtab.sh_size), file);	
 }
+
+
 //Step1
 void setup_little_endian(Elf32_info *elf){
 
@@ -353,7 +375,7 @@ void affiche_tableSection(Elf32_info elf,FILE *file){
    		}
 }
 
-
+//step 3
 void myhexdump(FILE *file,int addr,int size){
 
   unsigned char buffer[N]; //Use unsigned char,prevent hex overflow.
@@ -417,7 +439,7 @@ void myhexdump(FILE *file,int addr,int size){
 
 int get_section_number(Elf32_info elf, char * nom){
 	int i;
-	if((nom[0]==46)){
+	if(nom[0]==46){
 		
 		for(i=0;i<elf.header.e_shnum;i++){
 			if(!strcmp(nom,(char *)elf.strtable+(elf.section[i].sh_name))){
@@ -455,7 +477,7 @@ void affiche_contentSection(Elf32_info elf,FILE *file){
 }
 
 
-
+//step 4
 
 void affiche_table_Symbol(Elf32_info elf,FILE *file){
 	int i;
@@ -518,7 +540,64 @@ void affiche_table_Symbol(Elf32_info elf,FILE *file){
 		}
 }
 
-
+void affiche_Relocation(Elf32_info *elf,FILE *file){
+	int relsize;
+	int reloff;
+	int nbrel;
+	int i,j,indice_sym;
+	int indice_sym_name;
+	char* type="";
+	unsigned char *sym_name;
+	if(elf->header.e_type!=ET_REL){
+		printf("There are no relocations in this file.\n");
+	}else{
+		for(i=0;i<elf->header.e_shnum;i++){
+			if(elf->section[i].sh_type==SHT_REL){
+				reloff=elf->section[i].sh_offset;
+				relsize=elf->section[i].sh_size;
+				nbrel=relsize/elf->section[i].sh_entsize;
+				printf("Section de relocalisation '%s' à l'adresse de décalage 0x%3x contient %d entrées:\n",elf->strtable+elf->section[i].sh_name,reloff,nbrel);
+				printf("Offset   Info      Type       Sym.Value    Sym.Name\n");
+				lire_Relo_table(elf,file,i);
+				for(j=0;j<nbrel;j++){
+					indice_sym=ELF32_R_SYM(elf->reltab[j].r_info);
+					switch(ELF32_ST_TYPE(elf->symtab[indice_sym].st_info)){
+						case STT_NOTYPE    :indice_sym_name=indice_sym;
+											sym_name=elf->symtable+elf->symtab[indice_sym_name].st_name;
+						break;
+						case STT_SECTION    :indice_sym_name=elf->symtab[indice_sym].st_shndx;
+											sym_name=elf->strtable+elf->section[indice_sym_name].sh_name;
+						break;
+			
+					}
+					switch(ELF32_R_TYPE(elf->reltab[j].r_info)){
+						case R_ARM_NONE    :type="R_ARM_NONE  ";
+						break;
+						case R_ARM_PC24    :type="R_ARM_PC24  ";
+						break;
+						case R_ARM_ABS32   :type="R_ARM_ABS32 ";
+						break;
+			 			case R_ARM_REL32   :type="R_ARM_REL32 ";
+						break;
+						case R_ARM_CALL    :type="R_ARM_CALL  ";
+						break;
+						case R_ARM_JUMP24  :type="R_ARM_JUMP24";
+						break;
+					
+					}
+					printf("%08x ",elf->reltab[j].r_offset);
+					printf("%08x ",elf->reltab[j].r_info);
+					printf("%s ",type);
+					printf("%08x   ",elf->symtab[indice_sym].st_value);
+					printf("%s  \n",sym_name);
+					
+					
+					
+				}
+			}
+		}
+	}
+}
 
 
 

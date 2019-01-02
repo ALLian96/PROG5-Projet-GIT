@@ -38,7 +38,7 @@ int main(int argc,char* argv[]){
 			printf("Afficher l'entete des sectons : S\n");
 			printf("Afficher le contenu d'une section : x\n");
 			printf("Afficher le table symbol : s\n");
-			
+			printf("Afficher relocation : r\n");
 			
 			
 			//récupère le contenu de la table des sections
@@ -67,6 +67,8 @@ int main(int argc,char* argv[]){
 						affiche_table_Symbol(elf,file);
 						break;
 
+					case 'r':
+						affiche_Relocation(&elf,file);
 					case 'Q': // Q
 					case 'q': // q
 						out = 1;
