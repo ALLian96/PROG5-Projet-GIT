@@ -5,6 +5,7 @@
 #include "read_elf_func.h"
 
 #define N 16
+#define BUFF 8196
 
 void initElf(Elf32_info *elf,FILE *file){
 	fread(&elf->header,1,sizeof(elf->header),file);
@@ -284,10 +285,10 @@ void affiche_header(Elf32_info elf){
 		printf("\tDebut des en-tetes de programme:\t\t\t%d(octets)\n",elf.header.e_phoff);
 		printf("\tDebut des en-tetes de section: \t\t\t%d(octets)\n",elf.header.e_shoff);
 		printf("\tFlags:                       \t\t\t%#02x\n",elf.header.e_flags);
-		printf("\tTaille de cet en-tete:         \t\t\t%d(bytes)\n",elf.header.e_ehsize);
-		printf("\tTaille de l'en-tete du programme:\t\t\t%d(bytes)\n",elf.header.e_phentsize);
+		printf("\tTaille de cet en-tete:         \t\t\t%d(octets)\n",elf.header.e_ehsize);
+		printf("\tTaille de l'en-tete du programme:\t\t\t%d(octets)\n",elf.header.e_phentsize);
 		printf("\tNombre d'en-tete du programme:  \t\t\t%d\n",elf.header.e_phnum);
-		printf("\tTaille des en-tetes de section:\t\t\t%d(bytes)\n",elf.header.e_shentsize);
+		printf("\tTaille des en-tetes de section:\t\t\t%d(octets)\n",elf.header.e_shentsize);
 		printf("\tNombre d'en-tetes de section:  \t\t\t%d\n",elf.header.e_shnum);
 		printf("\tTable d'indexes des chaines d'en-tete de section:\t%d\n",elf.header.e_shstrndx);
 }
@@ -589,8 +590,7 @@ void affiche_Relocation(Elf32_info *elf,FILE *file){
 					printf("%08x ",elf->reltab[j].r_info);
 					printf("%s ",type);
 					printf("%08x   ",elf->symtab[indice_sym].st_value);
-					printf("%s  \n",sym_name);
-					
+					printf("%s  \n",sym_name);			
 					
 					
 				}
@@ -601,22 +601,45 @@ void affiche_Relocation(Elf32_info *elf,FILE *file){
 }
 
 
-void mod_sec(Elf32_info *elf){
-
-	int i,j;
+void mod_sec(Elf32_info *elf, FILE *in, FILE *out){
 	
-	if(elf->header.e_type==ET_REL){
+	char buffer[BUFF];
+	fseek(in, 0, SEEK_END);
+	int length = ftell(in);
+	int i, j;
+	int end;
+	int s_end;
 		
-		for(i=0;i<elf->header.e_shnum;i++){
-			if(elf->section[i].sh_type==SHT_REL){			
-				for(j=i;j+1<elf->header.e_shnum;j++){
-					printf("%d ", j);
-					elf->section[j] = elf->section[j+1];
-				}
-				elf->header.e_shnum--;
-				
-			}	
+	fseek(in, 0, SEEK_SET);
+	fseek(out, 0, SEEK_SET);
+	
+	fread(&buffer, 1, elf->header.e_shoff, in);
+
+	for(i=0;i<elf->header.e_shoff;i++){
+	
+		fprintf(out,"%c", buffer[i]);		
+		
+	}
+	
+	for(i=0;i<elf->header.e_shnum;i++){			
+		fread(&buffer, sizeof(char),sizeof(Elf32_Shdr), in);
+
+		if(elf->section[i].sh_type!=SHT_REL){
+			for(j=0;j<sizeof(char)*sizeof(Elf32_Shdr);j++){
+				fprintf(out,"%c", buffer[j]);		
+			}
 		}
 	}
+	
+	s_end = elf->header.e_shoff + i*(sizeof(char)*sizeof(Elf32_Shdr));
+	end = length - elf->header.e_shoff - i;
+	fread(&buffer, 1, end, in);
+		
+	for(i=s_end;i<end;i++){
+	
+		fprintf(out,"%c", buffer[i]);		
+		
+	}
+	
 }
 
