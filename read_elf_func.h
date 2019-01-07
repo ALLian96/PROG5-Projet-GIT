@@ -46,3 +46,6 @@ void affiche_table_Symbol(Elf32_info elf,FILE *file);
 
 void lire_Relo_table(Elf32_info *elf,FILE *file,int indice_rel);
 void affiche_Relocation(Elf32_info *elf,FILE *file);
+
+// PHASE 2
+void mod_sec(Elf32_info *elf);
