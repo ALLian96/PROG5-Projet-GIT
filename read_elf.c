@@ -11,7 +11,7 @@ int main(int argc,char* argv[]){
 	char c;
 	int out = 0;
 	FILE *file;
-    int EIMAG0=127;
+    int EIMAG0=127; // Ox7F
 	char EIMAG1='E';
 	char EIMAG2='L';
 	char EIMAG3='F';
@@ -38,7 +38,7 @@ int main(int argc,char* argv[]){
 			printf("Afficher l'entete des sectons : S\n");
 			printf("Afficher le contenu d'une section : x\n");
 			printf("Afficher le table symbol : s\n");
-			printf("Afficher relocation : r\n");
+			printf("Afficher réimplantation : r\n");
 			
 			
 			//récupère le contenu de la table des sections
@@ -69,8 +69,10 @@ int main(int argc,char* argv[]){
 
 					case 'r':
 						affiche_Relocation(&elf,file);
-					case 'Q': // Q
-					case 'q': // q
+						break;
+						
+					case 'Q': 
+					case 'q': 
 						out = 1;
 						break;
 				
@@ -83,7 +85,7 @@ int main(int argc,char* argv[]){
 			}
 
 		} else {
-			printf("\nC'est pas un fichier ELF\n");
+			printf("\nCe n'est pas un fichier ELF\n");
 		}
 
 	}
