@@ -39,6 +39,7 @@ int main(int argc,char* argv[]){
 			printf("Afficher le contenu d'une section : x\n");
 			printf("Afficher le table symbol : s\n");
 			printf("Afficher réimplantation : r\n");
+			printf("Supprimer les relocations des tables : d\n");
 			
 			
 			//récupère le contenu de la table des sections
@@ -71,11 +72,15 @@ int main(int argc,char* argv[]){
 						affiche_Relocation(&elf,file);
 						break;
 						
+					case 'd': // Supp rel.
+						mod_sec(&elf);
+						break;
+						
 					case 'Q': 
 					case 'q': 
 						out = 1;
 						break;
-				
+						
 					default: 
 						printf("\nCette option n'existe pas\n");
 						break;

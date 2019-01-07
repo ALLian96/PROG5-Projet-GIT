@@ -489,7 +489,7 @@ void affiche_table_Symbol(Elf32_info elf,FILE *file){
 	int symoff=elf.section[indice_sym].sh_offset;
 	int nbsym=symsize/elf.section[indice_sym].sh_entsize;
 	printf("Table de symboles « %s » contient %d entrées:\n", elf.strtable+elf.section[indice_sym].sh_name,nbsym);
-	printf("[Nr] value    size  Type     Vis       Bind   ndex  Nom\n");
+	printf("[Nr] value    size  Type     Vis       Bind   Index  Nom\n");
 
 	fseek(file, symoff, SEEK_SET);
 	for(i=0;i<nbsym;i++){
@@ -556,7 +556,7 @@ void affiche_Relocation(Elf32_info *elf,FILE *file){
 				reloff=elf->section[i].sh_offset;
 				relsize=elf->section[i].sh_size;
 				nbrel=relsize/elf->section[i].sh_entsize;
-				printf("Section de relocalisation '%s' à l'adresse de décalage 0x%3x contient %d entrées:\n",elf->strtable+elf->section[i].sh_name,reloff,nbrel);
+				printf("Section de relocalisation '%s' à l'adresse de décalage 0x%3x contenant %d entrées:\n",elf->strtable+elf->section[i].sh_name,reloff,nbrel);
 				printf("Offset   Info      Type       Sym.Value    Sym.Name\n");
 				lire_Relo_table(elf,file,i);
 				for(j=0;j<nbrel;j++){
@@ -597,24 +597,26 @@ void affiche_Relocation(Elf32_info *elf,FILE *file){
 			}
 		}
 	}
+	
 }
 
 
+void mod_sec(Elf32_info *elf){
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	int i,j;
+	
+	if(elf->header.e_type==ET_REL){
+		
+		for(i=0;i<elf->header.e_shnum;i++){
+			if(elf->section[i].sh_type==SHT_REL){			
+				for(j=i;j+1<elf->header.e_shnum;j++){
+					printf("%d ", j);
+					elf->section[j] = elf->section[j+1];
+				}
+				elf->header.e_shnum--;
+				
+			}	
+		}
+	}
+}
 
