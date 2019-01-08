@@ -633,22 +633,28 @@ void mod_sec(Elf32_info elf, FILE *in, FILE *out){
 	s_end = elf.header.e_shoff + i*(sizeof(char)*sizeof(Elf32_Shdr));
 	end = length - elf.header.e_shoff - i;
 	fread(&buffer, 1, end, in);
+	
 	printf("\nafter\n");
+	
 	for(i=s_end;i<end;i++){
 		printf("%8x", buffer[i]);
 		fprintf(out,"%c", buffer[i]);		
 	}
 	//modifier e_shnum
-	fseek(out,48,SEEK_SET);  
+	int offs_shnum = sizeof(Elf32_Ehdr) - sizeof(Elf32_Half)*2; //
+	fseek(out,offs_shnum,SEEK_SET);  
 	uint16_t shnum=elf.header.e_shnum - cpt_nrel;
 	shnum=swap_uint16(shnum);
 	fwrite(&shnum,1,sizeof(uint16_t),out);
+	
 	//modifier e_shstrndx
-	fseek(out,50,SEEK_SET);
-	uint16_t shstrtab=elf.header.e_shstrndx - cpt_nrel;
-	shstrtab=swap_uint16(shstrtab);
-	fwrite(&shstrtab,1,sizeof(uint16_t),out);
+	int offs_shstrndx = sizeof(Elf32_Ehdr) - sizeof(Elf32_Half); // 
+	fseek(out,offs_shstrndx,SEEK_SET);
+	uint16_t shstrndx=elf.header.e_shstrndx - cpt_nrel;
+	shstrndx=swap_uint16(shstrndx);
+	fwrite(&shstrndx,1,sizeof(uint16_t),out);
 	fseek(out, 0, SEEK_SET); 
+	
 	//lecture du fichier de sortie
 	Elf32_info elf_1;
 	initElf(&elf_1,out);	
@@ -656,4 +662,3 @@ void mod_sec(Elf32_info elf, FILE *in, FILE *out){
 	
 	
 }
-
