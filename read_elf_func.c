@@ -493,6 +493,8 @@ void affiche_table_Symbol(Elf32_info elf,FILE *file){
 	printf("[Nr] value    size  Type     Vis       Bind   Index  Nom\n");
 
 	fseek(file, symoff, SEEK_SET);
+	int ici = ftell(file);
+	printf("ICI : %d\n", ici);
 	for(i=0;i<nbsym;i++){
 
 			switch(ELF32_ST_BIND(elf.symtab[i].st_info)){
@@ -532,12 +534,12 @@ void affiche_table_Symbol(Elf32_info elf,FILE *file){
 
 			printf("[%2d] ",i);
 			printf("%08x ",elf.symtab[i].st_value);
-        		printf("%x     ",elf.symtab[i].st_size);
+        	printf("%x     ",elf.symtab[i].st_size);
 			printf("%s ",type);        	
-        		printf("%s ",bind);
+        	printf("%s ",bind);
 			printf("%s ",visi);
-        		printf("%x ",  elf.symtab[i].st_shndx);
-        		printf("%-15s\n", elf.symtable+elf.symtab[i].st_name);
+    		printf("%x ",  elf.symtab[i].st_shndx);
+    		printf("%-15s\n", elf.symtable+elf.symtab[i].st_name);
 		}
 }
 
@@ -623,6 +625,7 @@ void mod_sec(Elf32_info elf, FILE *in, FILE *out){
 		if(elf.section[i].sh_type!=SHT_REL){
 			for(j=0;j<sizeof(char)*sizeof(Elf32_Shdr);j++){
 				//printf("%8x", buffer[j]);
+				
 				fprintf(out,"%c",buffer[j]);		
 			}
 		}	
@@ -633,29 +636,35 @@ void mod_sec(Elf32_info elf, FILE *in, FILE *out){
 	s_end = elf.header.e_shoff + i*(sizeof(char)*sizeof(Elf32_Shdr));
 	end = length - elf.header.e_shoff - i;
 	fread(&buffer, 1, end, in);
+	
 	printf("\nafter\n");
+	
 	for(i=s_end;i<end;i++){
 		printf("%8x", buffer[i]);
 		fprintf(out,"%c", buffer[i]);		
 	}
 	//modifier e_shnum
-	fseek(out,48,SEEK_SET);  //48 est l'adresse de e_shnum
+	int offs_shnum = sizeof(Elf32_Ehdr) - sizeof(Elf32_Half)*2; //
+	fseek(out,offs_shnum,SEEK_SET);  
 	uint16_t shnum=elf.header.e_shnum - cpt_nrel;
 	shnum=swap_uint16(shnum);
 	fwrite(&shnum,1,sizeof(uint16_t),out);
+	
 	//modifier e_shstrndx
-	fseek(out,50,SEEK_SET); //50 est l'adresse de e_shstrndx
-	uint16_t shstrtab=elf.header.e_shstrndx - cpt_nrel;
-	shstrtab=swap_uint16(shstrtab);
-	fwrite(&shstrtab,1,sizeof(uint16_t),out);
+	int offs_shstrndx = sizeof(Elf32_Ehdr) - sizeof(Elf32_Half); // 
+	fseek(out,offs_shstrndx,SEEK_SET);
+	uint16_t shstrndx=elf.header.e_shstrndx - cpt_nrel;
+	shstrndx=swap_uint16(shstrndx);
+	fwrite(&shstrndx,1,sizeof(uint16_t),out);
 	fseek(out, 0, SEEK_SET); 
+	
 	//lecture du fichier de sortie
 	Elf32_info elf_1;
 	initElf(&elf_1,out);	
 	affiche_tableSection(elf_1,out);
-
-
-
+	
+	
+	// Mofification value
 	int indice_sym=get_indice_sym(elf);
 	int symsize=elf.section[indice_sym].sh_size;
 	int symoff=elf.section[indice_sym].sh_offset;
@@ -663,12 +672,19 @@ void mod_sec(Elf32_info elf, FILE *in, FILE *out){
 	for(i=0;i<shnum;i++){
 		for(j=i;j<nbsym;j++){
 			if(elf_1.section[i].sh_name==elf.section[elf.symtab[j].st_shndx].sh_name){
+				elf_1.symtab[j].st_value=elf.section[elf.symtab[j].st_shndx].sh_addr + 
+											elf.symtab[j].st_value;
 				elf_1.symtab[j].st_shndx=i;
 			}
 		}
 	}
 	
 	for(i=0;i<nbsym;i++){
+	
+		fseek(out,symoff+sizeof(Elf32_Sym)*(i+1) - sizeof(Elf32_Sym) +  sizeof(Elf32_Word),SEEK_SET);
+		elf_1.symtab[i].st_value=swap_uint32(elf_1.symtab[i].st_value);
+		fwrite(&elf_1.symtab[i].st_value,1,sizeof(uint32_t),out);	
+	
 		fseek(out,symoff+sizeof(Elf32_Sym)*(i+1)-sizeof(Elf32_Half),SEEK_SET);
 		elf_1.symtab[i].st_shndx=swap_uint16(elf_1.symtab[i].st_shndx);
 		fwrite(&elf_1.symtab[i].st_shndx,1,sizeof(uint16_t),out);
@@ -677,27 +693,4 @@ void mod_sec(Elf32_info elf, FILE *in, FILE *out){
 	initElf(&elf_1,out);
 	affiche_table_Symbol(elf_1,out);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
