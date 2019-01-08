@@ -638,15 +638,22 @@ void mod_sec(Elf32_info elf, FILE *in, FILE *out){
 		printf("%8x", buffer[i]);
 		fprintf(out,"%c", buffer[i]);		
 	}
-	fseek(out, 0, SEEK_SET); //待完成：修改输出文件e_shnum地址上的数字
+	//modifier e_shnum
+	fseek(out,48,SEEK_SET);  
+	uint16_t shnum=elf.header.e_shnum - cpt_nrel;
+	shnum=swap_uint16(shnum);
+	fwrite(&shnum,1,sizeof(uint16_t),out);
+	//modifier e_shstrndx
+	fseek(out,50,SEEK_SET);
+	uint16_t shstrtab=elf.header.e_shstrndx - cpt_nrel;
+	shstrtab=swap_uint16(shstrtab);
+	fwrite(&shstrtab,1,sizeof(uint16_t),out);
+	fseek(out, 0, SEEK_SET); 
+	//lecture du fichier de sortie
 	Elf32_info elf_1;
 	initElf(&elf_1,out);	
-	elf_1.header.e_shnum = elf_1.header.e_shnum - cpt_nrel;
-	printf("%d\n",elf_1.header.e_shnum);
 	affiche_tableSection(elf_1,out);
-	for(i=0;i<elf_1.header.e_shnum;i++){
-		printf("%s ", elf.strtable+elf_1.section[i].sh_name);
-	}
+	
 	
 }
 
