@@ -601,44 +601,51 @@ void affiche_Relocation(Elf32_info *elf,FILE *file){
 }
 
 
-void mod_sec(Elf32_info *elf, FILE *in, FILE *out){
-	
-	char buffer[BUFF];
+void mod_sec(Elf32_info elf, FILE *in, FILE *out){
+	unsigned char buffer[BUFF];
 	fseek(in, 0, SEEK_END);
 	int length = ftell(in);
-	int i, j;
+	int i,j,cpt_nrel=0; //compteur de non-rel
+	//int c;
 	int end;
 	int s_end;
-		
+	printf("\nbefore\n");
 	fseek(in, 0, SEEK_SET);
 	fseek(out, 0, SEEK_SET);
-	
-	fread(&buffer, 1, elf->header.e_shoff, in);
-
-	for(i=0;i<elf->header.e_shoff;i++){
-	
-		fprintf(out,"%c", buffer[i]);		
-		
+	fread(&buffer, 1, elf.header.e_shoff, in);
+	for(i=0;i<elf.header.e_shoff;i++){
+		//printf("%8x",buffer[i]);
+		fprintf(out,"%c",buffer[i]);	
 	}
-	
-	for(i=0;i<elf->header.e_shnum;i++){			
+	printf("\nsection\n");
+	for(i=0;i<elf.header.e_shnum;i++){			
 		fread(&buffer, sizeof(char),sizeof(Elf32_Shdr), in);
-
-		if(elf->section[i].sh_type!=SHT_REL){
+		if(elf.section[i].sh_type!=SHT_REL){
 			for(j=0;j<sizeof(char)*sizeof(Elf32_Shdr);j++){
-				fprintf(out,"%c", buffer[j]);		
+				//printf("%8x", buffer[j]);
+				fprintf(out,"%c",buffer[j]);		
 			}
+		}	
+		else if(elf.section[i].sh_type==SHT_REL){
+			cpt_nrel++;
 		}
 	}
-	
-	s_end = elf->header.e_shoff + i*(sizeof(char)*sizeof(Elf32_Shdr));
-	end = length - elf->header.e_shoff - i;
+	s_end = elf.header.e_shoff + i*(sizeof(char)*sizeof(Elf32_Shdr));
+	end = length - elf.header.e_shoff - i;
 	fread(&buffer, 1, end, in);
-		
+	printf("\nafter\n");
 	for(i=s_end;i<end;i++){
-	
+		printf("%8x", buffer[i]);
 		fprintf(out,"%c", buffer[i]);		
-		
+	}
+	fseek(out, 0, SEEK_SET); //待完成：修改输出文件e_shnum地址上的数字
+	Elf32_info elf_1;
+	initElf(&elf_1,out);	
+	elf_1.header.e_shnum = elf_1.header.e_shnum - cpt_nrel;
+	printf("%d\n",elf_1.header.e_shnum);
+	affiche_tableSection(elf_1,out);
+	for(i=0;i<elf_1.header.e_shnum;i++){
+		printf("%s ", elf.strtable+elf_1.section[i].sh_name);
 	}
 	
 }

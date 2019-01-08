@@ -1,6 +1,6 @@
 #include "myelf.h"
 #include "conversion.h"
-
+#include<stdio.h>
 typedef struct{
 	Elf32_Ehdr header;
 	Elf32_Shdr *section;
@@ -44,8 +44,10 @@ int get_section(Elf32_info elf, char * nom);
 void init_symtable(Elf32_info *elf,FILE *file);
 void affiche_table_Symbol(Elf32_info elf,FILE *file);
 
+//step5
 void lire_Relo_table(Elf32_info *elf,FILE *file,int indice_rel);
 void affiche_Relocation(Elf32_info *elf,FILE *file);
 
 // PHASE 2
-void mod_sec(Elf32_info *elf);
+//step 6
+void mod_sec(Elf32_info elf, FILE *in, FILE *out);

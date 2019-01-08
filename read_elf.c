@@ -10,12 +10,19 @@ int main(int argc,char* argv[]){
 	
 	char c;
 	int out = 0;
-	FILE *file;
+	FILE *file,*fout;
     int EIMAG0=127; // Ox7F
 	char EIMAG1='E';
 	char EIMAG2='L';
 	char EIMAG3='F';
 	file=fopen(argv[1],"r");
+	if(argc==3){
+		fout=fopen(argv[2],"rb+");
+		if(fout==NULL){
+			printf("Erreur, entrer deuxieme fichier elf en argument.\n");
+			exit(1);
+		}
+	}
 	if(file==NULL){
 		printf("Erreur, entrer un fichier elf en argument.\n");
 		exit(1);
@@ -73,7 +80,7 @@ int main(int argc,char* argv[]){
 						break;
 						
 					case 'd': // Supp rel.
-						mod_sec(&elf);
+						mod_sec(elf,file,fout);
 						break;
 						
 					case 'Q': 
