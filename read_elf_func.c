@@ -6,7 +6,9 @@
 
 #define N 16
 #define BUFF 8196
-
+#define ABS32(S, A,T)	(S + A)| T
+#define ABS16(S, A)	(S + A)
+#define ABS8(S, A)	(S + A)
 void initElf(Elf32_info *elf,FILE *file){
 	fread(&elf->header,1,sizeof(elf->header),file);
 	//if big endian then swap
@@ -691,5 +693,63 @@ void mod_sec(Elf32_info elf, FILE *in, FILE *out){
 	fseek(out, 0, SEEK_SET);
 	initElf(&elf_1,out);
 	affiche_table_Symbol(elf_1,out);
+
+//etap 8
+	int relsize;
+	int nbrel;
+	uint32_t S,A,T=0,ref;
+	char *str_text=".text";
+	char *str_data=".data";
+	for(i=0;i<elf.header.e_shnum;i++){
+			if(elf.section[i].sh_type==SHT_REL){
+				relsize=elf.section[i].sh_size;
+				nbrel=relsize/elf.section[i].sh_entsize;
+				declaReltab(&elf,i);
+				lire_Relo_table(&elf,in,i);
+				for(j=0;j<nbrel;j++){
+					indice_sym=ELF32_R_SYM(elf.reltab[j].r_info);
+					unsigned char *name=elf.strtable+elf.section[elf.symtab[indice_sym].st_shndx].sh_name;
+					if(!strcmp((char *)name,str_text)||!strcmp((char *)name,str_data)){
+						S=elf.symtab[indice_sym].st_value;
+						A=elf.reltab[j].r_offset+elf.section[elf.symtab[indice_sym].st_shndx].sh_offset;
+						switch(ELF32_R_TYPE(elf.reltab[j].r_info)){
+							case R_ARM_ABS32   :if(ELF32_ST_TYPE(elf.symtab[indice_sym].st_info)==STT_FUNC){
+									T=1;}
+								    ref=ABS32(S,A,T);
+								    fseek(out, A, SEEK_SET);
+								    fwrite(&ref,1,sizeof(uint32_t),out);
+							break;
+							case R_ARM_ABS16    :fseek(out, A, SEEK_SET);
+								    ref=ABS16(S,A);
+								    fwrite(&ref,1,sizeof(uint32_t),out);
+							break;
+							case R_ARM_ABS8    :fseek(out, A, SEEK_SET);
+								    ref=ABS8(S,A);
+								    fwrite(&ref,1,sizeof(uint32_t),out);
+							break;
+					
+						}
+					}
+				}
+			}
+	}
+	fseek(out, 0, SEEK_SET);
+	initElf(&elf_1,out);
+	affiche_tableSection(elf_1,out);
+	affiche_table_Symbol(elf_1,out);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

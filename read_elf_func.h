@@ -12,7 +12,7 @@ typedef struct{
 
 void initElf(Elf32_info *elf,FILE *file);
 void declaSymtab(Elf32_info *elf);
-void declaReltab(Elf32_info *elf);
+void declaReltab(Elf32_info *elf,int indice_rel);
 void lire_Section_table(Elf32_info *elf,FILE *file);
 void lire_Symbol_table(Elf32_info *elf,FILE *file);
 int get_indice_sym(Elf32_info elf);
