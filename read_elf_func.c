@@ -19,7 +19,7 @@ void initElf(Elf32_info *elf,FILE *file){
 	declaSymtab(elf);
 	init_symtable(elf,file);
 	lire_Symbol_table(elf,file);
-	declaReltab(elf);
+	
 }	
 
 void declaSymtab(Elf32_info *elf){
@@ -30,13 +30,10 @@ void declaSymtab(Elf32_info *elf){
 		elf->symtab = malloc(sizeof(Elf32_Sym) * (elf->section[i].sh_size/elf->section[i].sh_entsize));
 	}
 }
-void declaReltab(Elf32_info *elf){
-	int i;
-	int sechnum = elf->header.e_shnum;
-	for(i=0;i<sechnum;i++){
-		if(elf->section[i].sh_type==SHT_REL)
-		elf->reltab = malloc(sizeof(Elf32_Rel) * (elf->section[i].sh_size/elf->section[i].sh_entsize));
-	}
+void declaReltab(Elf32_info *elf,int indice_rel){
+	int relsize=elf->section[indice_rel].sh_size;
+	int nbrel=relsize/elf->section[indice_rel].sh_entsize;
+	elf->reltab = malloc(sizeof(Elf32_Rel) * nbrel);
 }
 void lire_Section_table(Elf32_info *elf,FILE *file){
 		int i;
@@ -561,6 +558,7 @@ void affiche_Relocation(Elf32_info *elf,FILE *file){
 				nbrel=relsize/elf->section[i].sh_entsize;
 				printf("Section de relocalisation '%s' à l'adresse de décalage 0x%3x contenant %d entrées:\n",elf->strtable+elf->section[i].sh_name,reloff,nbrel);
 				printf("Offset   Info      Type       Sym.Value    Sym.Name\n");
+				declaReltab(elf,i);
 				lire_Relo_table(elf,file,i);
 				for(j=0;j<nbrel;j++){
 					indice_sym=ELF32_R_SYM(elf->reltab[j].r_info);
@@ -579,6 +577,10 @@ void affiche_Relocation(Elf32_info *elf,FILE *file){
 						case R_ARM_PC24    :type="R_ARM_PC24  ";
 						break;
 						case R_ARM_ABS32   :type="R_ARM_ABS32 ";
+						break;
+						case R_ARM_ABS16    :type="R_ARM_ABS16";
+						break;
+						case R_ARM_ABS8    :type="R_ARM_ABS8  ";
 						break;
 			 			case R_ARM_REL32   :type="R_ARM_REL32 ";
 						break;
@@ -608,10 +610,9 @@ void mod_sec(Elf32_info elf, FILE *in, FILE *out){
 	fseek(in, 0, SEEK_END);
 	int length = ftell(in);
 	int i,j,cpt_nrel=0; //compteur de non-rel
-	//int c;
+
 	int end;
 	int s_end;
-	printf("\nbefore\n");
 	fseek(in, 0, SEEK_SET);
 	fseek(out, 0, SEEK_SET);
 	fread(&buffer, 1, elf.header.e_shoff, in);
@@ -619,7 +620,6 @@ void mod_sec(Elf32_info elf, FILE *in, FILE *out){
 		//printf("%8x",buffer[i]);
 		fprintf(out,"%c",buffer[i]);	
 	}
-	printf("\nsection\n");
 	for(i=0;i<elf.header.e_shnum;i++){			
 		fread(&buffer, sizeof(char),sizeof(Elf32_Shdr), in);
 		if(elf.section[i].sh_type!=SHT_REL){
@@ -637,7 +637,6 @@ void mod_sec(Elf32_info elf, FILE *in, FILE *out){
 	end = length - elf.header.e_shoff - i;
 	fread(&buffer, 1, end, in);
 	
-	printf("\nafter\n");
 	
 	for(i=s_end;i<end;i++){
 		printf("%8x", buffer[i]);
