@@ -6,9 +6,11 @@
 
 #define N 16
 #define BUFF 8196
-#define ABS32(S, A,T)	(S + A)| T
+#define ABS32(S, A, T)	(S + A)| T
 #define ABS16(S, A)	(S + A)
 #define ABS8(S, A)	(S + A)
+#define CALL(S, A, T, P)	((S + A)| T) - P
+#define JUMP24(S, A, T, P)	((S + A)| T) - P
 void initElf(Elf32_info *elf,FILE *file){
 	fread(&elf->header,1,sizeof(elf->header),file);
 	//if big endian then swap
@@ -727,6 +729,18 @@ void mod_sec(Elf32_info elf, FILE *in, FILE *out){
 								    ref=ABS8(S,A);
 								    fwrite(&ref,1,sizeof(uint32_t),out);
 							break;
+							case R_ARM_CALL   :if(ELF32_ST_TYPE(elf.symtab[indice_sym].st_info)==STT_FUNC){
+									T=1;}
+									fseek(out, A, SEEK_SET);
+									ref=CALL(S,A,T,(int)&A);
+									fwrite(&ref,1,sizeof(uint32_t),out);
+							break;
+							case R_ARM_JUMP24   :if(ELF32_ST_TYPE(elf.symtab[indice_sym].st_info)==STT_FUNC){
+									T=1;}
+									fseek(out, A, SEEK_SET);
+									ref=JUMP24(S,A,T,(int)&A);
+									fwrite(&ref,1,sizeof(uint32_t),out);
+							break;
 					
 						}
 					}
@@ -737,6 +751,7 @@ void mod_sec(Elf32_info elf, FILE *in, FILE *out){
 	initElf(&elf_1,out);
 	affiche_tableSection(elf_1,out);
 	affiche_table_Symbol(elf_1,out);
+	affiche_header(elf_1);
 }
 
 
