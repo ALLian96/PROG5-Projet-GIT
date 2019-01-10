@@ -152,8 +152,6 @@ void mod_sec(Elf32_info elf, FILE *in, FILE *out){
 	//lecture du fichier de sortie
 	Elf32_info elf_1;
 	initElf(&elf_1,out);	
-	affiche_tableSection(elf_1,out);
-	
 	
 	// Mofification value
 	int indice_sym=get_indice_sym(elf);
@@ -180,9 +178,6 @@ void mod_sec(Elf32_info elf, FILE *in, FILE *out){
 		elf_1.symtab[i].st_shndx=swap_uint16(elf_1.symtab[i].st_shndx);
 		fwrite(&elf_1.symtab[i].st_shndx,1,sizeof(uint16_t),out);
 	}
-	fseek(out, 0, SEEK_SET);
-	initElf(&elf_1,out);
-	affiche_table_Symbol(elf_1,out);
 
 //etap 8
 	int relsize;
@@ -239,6 +234,5 @@ void mod_sec(Elf32_info elf, FILE *in, FILE *out){
 	initElf(&elf_1,out);
 	affiche_tableSection(elf_1,out);
 	affiche_table_Symbol(elf_1,out);
-	affiche_header(elf_1);
 }
 
