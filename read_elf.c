@@ -9,12 +9,27 @@ int main(int argc,char* argv[]){
 	
 	
 	char c;
-	int out = 0;
+	int rep=0;
 	FILE *file,*fout;
     int EIMAG0=127; // Ox7F
 	char EIMAG1='E';
 	char EIMAG2='L';
 	char EIMAG3='F';
+
+    printf("**************************************************************\n");
+    printf("*    		  BIENVENUE DANS NOTRE PROGRAMME             *\n");
+    printf("*      PROG 5 - Projet: Realisation d'un editeur de liens    *\n");
+    printf("*                                                            *\n");
+    printf("*                                                            *\n");
+    printf("* REALISE PAR :                     ENCADRE PAR :            *\n");
+    printf("*  HAFID MOHAMED                       Guillaume Huard       *\n");
+    printf("*  TANG LIAN                           Vincent Danjean       *\n");
+    printf("*  WANG BIYUN                          Philippe Waille       *\n");
+    printf("*  CHENICHENE ABDALLAH                 Christopher Ferreira  *\n");
+    printf("*  PRIORE TOM                          Renaud Lachaize       *\n");
+    printf("*  WANG XINWEI                         Anne Rasse            *\n");
+    printf("**************************************************************\n\n");
+
 	file=fopen(argv[1],"r");
 	if(argc==3){
 		fout=fopen(argv[2],"rb+");
@@ -34,69 +49,56 @@ int main(int argc,char* argv[]){
 			elf.header.e_ident[EI_MAG2] == EIMAG2 &&
 			elf.header.e_ident[EI_MAG3] == EIMAG3){
 
-			
-			
-				
-			printf("-----------------------\n");  
-			printf("-        Menu         -\n"); 
-			printf("-----------------------\n");      
-			printf("Quitter : q\n");
-			printf("Afficher l'entete : h\n");
-			printf("Afficher l'entete des sectons : S\n");
-			printf("Afficher le contenu d'une section : x\n");
-			printf("Afficher le table symbol : s\n");
-			printf("Afficher réimplantation : r\n");
-			printf("Supprimer les relocations des tables : d\n");
-			
-			
-			//récupère le contenu de la table des sections
-			
-			
-			c=getc(stdin);
-			
-			while(!out){
+			do{
 
-				
-			
-				switch(c){
-					case 'h': 
-						affiche_header(elf); 
-						break;
 
-					case 'S':
-						affiche_tableSection(elf,file);	
-						break;
+				            printf("-------------------------------------------------------------------------\n");  
+							printf("-                                   Menu                                -\n"); 
+							printf("-------------------------------------------------------------------------\n"); 
+							printf("\n");     
+							printf("Afficher l'entete                    =================================> h\n");
+							printf("Afficher l'entete des sectons        =================================> S\n");
+							printf("Afficher le contenu d'une section    =================================> x\n");
+							printf("Afficher le table symbol             =================================> s\n");
+							printf("Afficher réimplantation              =================================> r\n");
+							printf("Supprimer les relocations des tables =================================> d\n");
+							
+							
+							//récupère le contenu de la table des sections
+							
+							
+							c=getc(stdin);
 
-					case 'x':
-						affiche_contentSection(elf,file);					
-						break;
-						
-					case 's':
-						affiche_table_Symbol(elf,file);
-						break;
+								switch(c){
+									case 'h': affiche_header(elf); 
+										//system("readelf Examples_loader/example1 -h"); 
+										break;
 
-					case 'r':
-						affiche_Relocation(&elf,file);
-						break;
-						
-					case 'd': // Supp rel.
-						mod_sec(elf,file,fout);
-						break;
-						
-					case 'Q': 
-					case 'q': 
-						out = 1;
-						break;
-						
-					default: 
-						printf("\nCette option n'existe pas\n");
-						break;
-				}
-				c=getc(stdin);
+									case 'S': affiche_tableSection(elf,file); break;
 
-			}
+									case 'x': affiche_contentSection(elf,file); break;
+										
+									case 's': affiche_table_Symbol(elf,file); break;
 
-		} else {
+									case 'r': affiche_Relocation(&elf,file); break;
+										
+									case 'd':  mod_sec(elf,file,fout); break;  // Supp rel.
+                                   
+                                    case '\n': break;
+                                   
+                                    default:  printf("\nCette option n'existe pas\n");
+                                    break;
+							
+										
+							}
+				printf("\n       ** pour recommencer le programme   ====> 1 **\n");
+	            printf("\n       ** quitter definitiviment          ====> 2  **\n");
+	            scanf(" %d",&rep);
+
+            }
+   		    while (rep==1);	
+		} 
+		else {
 			printf("\nCe n'est pas un fichier ELF\n");
 		}
 
