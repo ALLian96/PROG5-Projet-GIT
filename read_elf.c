@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "myelf.h"
-#include "read_elf_func.h"
+#include "all_elf_func.h"
 
 int main(int argc,char* argv[]){
 	Elf32_info elf;
@@ -9,7 +9,7 @@ int main(int argc,char* argv[]){
 	
 	
 	char c;
-	int rep=0;
+//	int rep=0;
 	FILE *file,*fout;
     int EIMAG0=127; // Ox7F
 	char EIMAG1='E';
@@ -62,12 +62,12 @@ int main(int argc,char* argv[]){
 							printf("Afficher le table symbole            =================================> s\n");
 							printf("Afficher réimplantation              =================================> r\n");
 							printf("Supprimer les relocations des tables =================================> d\n");
-							
+							printf("Quitter                              =================================> q\n");
 							
 							//récupère le contenu de la table des sections
 							
 							
-							c=getc(stdin);
+						        scanf(" %c",&c);
 
 								switch(c){
 									case 'h': affiche_header(elf); 
@@ -92,19 +92,18 @@ int main(int argc,char* argv[]){
 										break;  // Supp rel.
 
                                    
-                                   case '\n': break;
+                                   case '\n': 
+                                   break;
                                    
                                     default:  printf("\nCette option n'existe pas\n");
                                     break;
 							
 										
 							}							
-				printf("\n       ** pour recommencer le programme   ====> 1 **\n");
-		        printf("\n       ** quitter definitiviment          ====> 2  **\n");
-		        scanf(" %d",&rep);
+		        printf("\n       ** quitter definitiviment          ====> q  **\n");
 
             }
-   		    while (rep==1);	
+   		    while (c!='q');	
 		} 
 		else {
 			printf("\nCe n'est pas un fichier ELF\n");
