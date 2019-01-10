@@ -1,16 +1,19 @@
 #include <stdio.h>
 #include <string.h> 
 #include <stdlib.h>
+#include <stdint.h>
 #include <ctype.h>
 #include "read_elf_func.h"
 
 #define N 16
 #define BUFF 8196
+
 #define ABS32(S, A, T)	(S + A)| T
 #define ABS16(S, A)	(S + A)
 #define ABS8(S, A)	(S + A)
 #define CALL(S, A, T, P)	((S + A)| T) - P
 #define JUMP24(S, A, T, P)	((S + A)| T) - P
+
 void initElf(Elf32_info *elf,FILE *file){
 	fread(&elf->header,1,sizeof(elf->header),file);
 	//if big endian then swap
@@ -339,28 +342,47 @@ void affiche_tableSection(Elf32_info elf,FILE *file){
 				case SHT_ARM_ATTRIBUTES  :sec_type="ARM_ATTRIBUTES";
 			}
 			if(shflag!=0){
-				if(shflag>=SHF_MASKPROC){
-					shflag=shflag-SHF_MASKPROC;
-					strcat(flag,"M");
+				if(shflag>=SHF_TLS){
+					shflag=shflag-SHF_TLS;
+					strcat(flag,"T");
 				}
+				if(shflag>=SHF_GROUP){
+					shflag=shflag-SHF_GROUP;
+					strcat(flag,"G");
+				}
+				if(shflag>=SHF_OS_NONCONFORMING){
+					shflag=shflag-SHF_OS_NONCONFORMING;
+					strcat(flag,"O");
+				}
+				if(shflag>=SHF_LINK_ORDER){
+					shflag=shflag-SHF_LINK_ORDER;
+					strcpy(flag, "L");
+				} 
 				if(shflag>=SHF_INFO_LINK){
-					shflag=SHF_INFO_LINK;
+					shflag=shflag-SHF_INFO_LINK;
 					strcpy(flag, "I");
-
-				} else {	
-					if(shflag>=SHF_EXECINSTR){
-						shflag=shflag-SHF_EXECINSTR;
-						strcat(flag,"X");
-					}
-					if(shflag>=SHF_ALLOC){
-						shflag=shflag-SHF_ALLOC;
-						strcat(flag,"A");
-					}
-					if(shflag>=SHF_WRITE){
-						shflag=shflag-SHF_WRITE;
-						strcat(flag,"W");
-					}
+				} 
+				if(shflag>=SHF_STRINGS){
+					shflag=shflag-SHF_STRINGS;
+					strcpy(flag, "S");
+				} 
+				if(shflag>=SHF_MERGE){
+					shflag=shflag-SHF_MERGE;
+					strcat(flag,"M");
+				}	
+				if(shflag>=SHF_EXECINSTR){
+					shflag=shflag-SHF_EXECINSTR;
+					strcat(flag,"X");
 				}
+				if(shflag>=SHF_ALLOC){
+					shflag=shflag-SHF_ALLOC;
+					strcat(flag,"A");
+				}
+				if(shflag>=SHF_WRITE){
+					shflag=shflag-SHF_WRITE;
+					strcat(flag,"W");
+				}
+				
 			}	
 			printf("[%2d] ",i);
 			printf("%-20.20s", elf.strtable+elf.section[i].sh_name);
@@ -375,6 +397,9 @@ void affiche_tableSection(Elf32_info elf,FILE *file){
         	printf("%2d \n", elf.section[i].sh_addralign);
         	free(flag);
    		}
+		printf("Clé des fanions:\nW (écriture), A (allocation), X (exécution), M (fusion), S (chaînes)\nI (info), L (ordre des liens), G (groupe), T (TLS)\n");
+
+			
 }
 
 //step 3
@@ -664,8 +689,6 @@ void mod_sec(Elf32_info elf, FILE *in, FILE *out){
 	//lecture du fichier de sortie
 	Elf32_info elf_1;
 	initElf(&elf_1,out);	
-	affiche_tableSection(elf_1,out);
-	
 	
 	// Mofification value
 	int indice_sym=get_indice_sym(elf);
@@ -692,9 +715,6 @@ void mod_sec(Elf32_info elf, FILE *in, FILE *out){
 		elf_1.symtab[i].st_shndx=swap_uint16(elf_1.symtab[i].st_shndx);
 		fwrite(&elf_1.symtab[i].st_shndx,1,sizeof(uint16_t),out);
 	}
-	fseek(out, 0, SEEK_SET);
-	initElf(&elf_1,out);
-	affiche_table_Symbol(elf_1,out);
 
 //etap 8
 	int relsize;
@@ -729,18 +749,20 @@ void mod_sec(Elf32_info elf, FILE *in, FILE *out){
 								    ref=ABS8(S,A);
 								    fwrite(&ref,1,sizeof(uint32_t),out);
 							break;
+
 							case R_ARM_CALL   :if(ELF32_ST_TYPE(elf.symtab[indice_sym].st_info)==STT_FUNC){
 									T=1;}
 									fseek(out, A, SEEK_SET);
-									ref=CALL(S,A,T,(int)&A);
+									ref=CALL(S,A,T,(uintptr_t)&A);
 									fwrite(&ref,1,sizeof(uint32_t),out);
 							break;
 							case R_ARM_JUMP24   :if(ELF32_ST_TYPE(elf.symtab[indice_sym].st_info)==STT_FUNC){
 									T=1;}
 									fseek(out, A, SEEK_SET);
-									ref=JUMP24(S,A,T,(int)&A);
+									ref=JUMP24(S,A,T,(uintptr_t)&A);
 									fwrite(&ref,1,sizeof(uint32_t),out);
 							break;
+
 					
 						}
 					}
@@ -751,7 +773,7 @@ void mod_sec(Elf32_info elf, FILE *in, FILE *out){
 	initElf(&elf_1,out);
 	affiche_tableSection(elf_1,out);
 	affiche_table_Symbol(elf_1,out);
-	affiche_header(elf_1);
+
 }
 
 
