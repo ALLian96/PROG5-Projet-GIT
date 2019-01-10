@@ -93,10 +93,14 @@ int main(int argc,char* argv[]){
 
                                    
                                    case '\n': 
-                                   break;
+                                   	break;
+                                   
+                                   case 'q': 
+		                               printf("\nSortie du programme.\n");
+		                               break;
                                    
                                     default:  printf("\nCette option n'existe pas\n");
-                                    break;
+                                   	 break;
 							
 										
 							}							
