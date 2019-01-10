@@ -100,7 +100,6 @@ int main(int argc,char* argv[]){
 							
 										
 							}							
-		        printf("\n       ** quitter definitiviment          ====> q  **\n");
 
             }
    		    while (c!='q');	
