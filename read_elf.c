@@ -59,7 +59,7 @@ int main(int argc,char* argv[]){
 							printf("Afficher l'entete                    =================================> h\n");
 							printf("Afficher l'entete des sectons        =================================> S\n");
 							printf("Afficher le contenu d'une section    =================================> x\n");
-							printf("Afficher le table symbol             =================================> s\n");
+							printf("Afficher le table symbole            =================================> s\n");
 							printf("Afficher réimplantation              =================================> r\n");
 							printf("Supprimer les relocations des tables =================================> d\n");
 							
@@ -82,18 +82,26 @@ int main(int argc,char* argv[]){
 
 									case 'r': affiche_Relocation(&elf,file); break;
 										
-									case 'd':  mod_sec(elf,file,fout); break;  // Supp rel.
+									case 'd':  
+										if(argc == 3){
+											mod_sec(elf,file,fout); 
+										}else{
+											printf("Erreur, entrer un deuxieme fichier elf en argument.\n");
+											exit(1);
+										}
+										break;  // Supp rel.
+
                                    
-                                    case '\n': break;
+                                   case '\n': break;
                                    
                                     default:  printf("\nCette option n'existe pas\n");
                                     break;
 							
 										
-							}
+							}							
 				printf("\n       ** pour recommencer le programme   ====> 1 **\n");
-	            printf("\n       ** quitter definitiviment          ====> 2  **\n");
-	            scanf(" %d",&rep);
+		        printf("\n       ** quitter definitiviment          ====> 2  **\n");
+		        scanf(" %d",&rep);
 
             }
    		    while (rep==1);	
